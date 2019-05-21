@@ -1,4 +1,3 @@
-/home/leevius/gatk_prune_0331/gatk HaplotypeCaller -R /z/scratch7/index/hg38.fa -I /z/scratch7/bam/variant_test_1m_dupRem.bam -O /z/scratch7/leevius/output/run_result.vcf --native-pair-hmm-threads 56 -max-assembly-region-size 300 --smith-waterman FASTEST_AVAILABLE --pcr-indel-model NONE
 #number: 1553
 --------------------
 Removed index: [4, 25, 64, 129, 141, 173, 187, 200, 216, 228, 229, 237, 261, 300, 401, 482, 563, 670, 676, 685, 793, 991, 1062, 1123, 1179, 1197, 1213, 1296, 1324, 1393]

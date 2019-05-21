@@ -176,9 +176,9 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         return annotations.stream()
                 .filter(c -> (
                         c.getClass() != (ChromosomeCounts.class) &&
-                        c.getClass() != (FisherStrand.class) &&
-                        c.getClass() != (StrandOddsRatio.class) &&
-                        c.getClass() != (QualByDepth.class))
+                                c.getClass() != (FisherStrand.class) &&
+                                c.getClass() != (StrandOddsRatio.class) &&
+                                c.getClass() != (QualByDepth.class))
                 ).collect(Collectors.toList());
     }
 
@@ -207,7 +207,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
 
         //Allele-specific annotations are not yet supported in the VCF mode
         if (isAlleleSpecificMode(annotationEngine) && isVCFMode()){
-           throw new UserException("Allele-specific annotations are not yet supported in the VCF mode");
+            throw new UserException("Allele-specific annotations are not yet supported in the VCF mode");
         }
 
         haplotypeBAMWriter = AssemblyBasedCallerUtils.createBamWriter(hcArgs, createBamOutIndex, createBamOutMD5, readsHeader);
@@ -229,7 +229,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         return annotationEngine.getInfoAnnotations().stream()
                 .anyMatch(infoFieldAnnotation -> infoFieldAnnotation.getClass().getSimpleName().startsWith("AS_")) ||
                 annotationEngine.getGenotypeAnnotations().stream()
-                .anyMatch(genotypeAnnotation -> genotypeAnnotation.getClass().getSimpleName().startsWith("AS_"));
+                        .anyMatch(genotypeAnnotation -> genotypeAnnotation.getClass().getSimpleName().startsWith("AS_"));
     }
 
     private void validateAndInitializeArgs() {
@@ -582,12 +582,21 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         final List<Haplotype> haplotypes = assemblyResult.getHaplotypeList();
         final Map<String,List<GATKRead>> reads = splitReadsBySample(regionForGenotyping.getReads());
 
+        // added by Chenhao
+        for (String key : reads.keySet()){
+            System.out.println("#number: " + reads.get(key).size());
+        }
+
+        // 第三步
         // Calculate the likelihoods: CPU intensive part.
         final List<ReadLikelihoods<Haplotype>> readLikelihoods =
                 likelihoodCalculationEngine.computeReadLikelihoods(assemblyResult, samplesList, reads);
 
+        // Attention
         // Realign reads to their best haplotype.
-	// Xiao: this part is based on lowerbound only because I think it only modifies Cigar strings of reads 
+        // Xiao: this part is based on lowerbound only because I think it only modifies Cigar strings of reads
+        // 得到了三个结果 lo up exact
+        // 这里为什么要change alignment？
         final Map<GATKRead, GATKRead> readRealignments = AssemblyBasedCallerUtils.realignReadsToTheirBestHaplotype(readLikelihoods.get(0), assemblyResult.getReferenceHaplotype(), assemblyResult.getPaddedReferenceLoc(), aligner);
         readLikelihoods.get(0).changeReads(readRealignments);
         readLikelihoods.get(1).changeReads(readRealignments);
@@ -600,6 +609,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         //  haplotype containing C as reference (and vice versa).  Now this is fine if all possible haplotypes are included
         //  in the genotyping, but we lose information if we select down to a few haplotypes.  [EB]
 
+        // 第四步 assign genotype likelihood
         final HaplotypeCallerGenotypingEngine.CalledHaplotypes calledHaplotypes = genotypingEngine.assignGenotypeLikelihoods(
                 haplotypes,
                 readLikelihoods,
@@ -613,6 +623,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
                 hcArgs.maxMnpDistance,
                 readsHeader,
                 haplotypeBAMWriter.isPresent());
+        //------------------
 
         if ( haplotypeBAMWriter.isPresent() ) {
             final Set<Haplotype> calledHaplotypeSet = new HashSet<>(calledHaplotypes.getCalledHaplotypes());
@@ -620,7 +631,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
                 calledHaplotypeSet.add(assemblyResult.getReferenceHaplotype());
             }
             haplotypeBAMWriter.get().writeReadsAlignedToHaplotypes(haplotypes, assemblyResult.getPaddedReferenceLoc(), haplotypes,
-                                                             calledHaplotypeSet, readLikelihoods.get(0),regionForGenotyping.getSpan());
+                    calledHaplotypeSet, readLikelihoods.get(0),regionForGenotyping.getSpan());
         }
 
         if( hcArgs.debug) {
@@ -705,7 +716,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
                                                                    final SampleList samples,
                                                                    final AssemblyRegion region) {
         return new ReadLikelihoods<>(samples, new IndexedAlleleList<>(refHaplotype),
-                                     splitReadsBySample(samples, region.getReads()));
+                splitReadsBySample(samples, region.getReads()));
     }
 
     /**

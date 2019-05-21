@@ -9,6 +9,7 @@ import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.LikelihoodMatrix;
+import org.broadinstitute.hellbender.utils.genotyper.ReadLikelihoods;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
@@ -105,7 +106,7 @@ public abstract class PairHMM implements Closeable{
             }
             catch ( UserException.HardwareFeatureException e ) {
                 logger.warn("***WARNING: Machine does not have the AVX instruction set support needed for the accelerated AVX PairHmm. " +
-                            "Falling back to the MUCH slower LOGLESS_CACHING implementation!");
+                        "Falling back to the MUCH slower LOGLESS_CACHING implementation!");
                 return new LoglessPairHMM();
             }
         });
@@ -209,9 +210,31 @@ public abstract class PairHMM implements Closeable{
      * @param gcp penalty for gap continuations base array map for processed reads.
      *
      */
+    // added by Chenhao
+    // used in Readlikelihoods(filter part when bound check fails)
+    public double recomputeExactLog10Likelihoods(int sampleindex, final GATKRead read, final int indexOfHaplotype,
+                                                 ReadLikelihoods<Haplotype> result_upper,
+                                                 final Map<GATKRead, byte[]> gcp,
+                                                 final boolean recacheReadValues,
+                                                 final byte[] nextHaplotypeBases){
+        final byte[] readBases = read.getBases();
+        final byte[] readQuals = read.getBaseQualities();
+        final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(read);
+        final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(read);
+        final byte[] overallGCP = gcp.get(read);
+
+        // get the target haplotype
+        final Allele allele = result_upper.sampleMatrix(sampleindex).getAllele(indexOfHaplotype);
+        // initialize the pairHMM
+        initialize(read.getLength(), allele.length());
+        // calculate the exact result
+        double exact_result = computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, recacheReadValues, nextHaplotypeBases);
+        return exact_result;
+    }
+
     public void computeLog10Likelihoods(final LikelihoodMatrix<Haplotype> logLikelihoods_lowerbound,final LikelihoodMatrix<Haplotype> logLikelihoods_upperbound,final LikelihoodMatrix<Haplotype> logLikelihoods_exact,
-                                      final List<GATKRead> processedReads,
-                                      final Map<GATKRead, byte[]> gcp) {
+                                        final List<GATKRead> processedReads,
+                                        final Map<GATKRead, byte[]> gcp) {
         if (processedReads.isEmpty()) {
             return;
         }
@@ -219,6 +242,7 @@ public abstract class PairHMM implements Closeable{
             startTime = System.nanoTime();
         }
         // (re)initialize the pairHMM only if necessary
+        // 这里是在初始化 暂时不管
         final int readMaxLength = findMaxReadLength(processedReads);
         final int haplotypeMaxLength = findMaxAlleleLength(logLikelihoods_lowerbound.alleles());
         if (!initialized || readMaxLength > maxReadLength || haplotypeMaxLength > maxHaplotypeLength) {
@@ -231,6 +255,8 @@ public abstract class PairHMM implements Closeable{
         mLogLikelihoodArray = new double[readCount * alleleCount];
         int idx = 0;
         int readIndex = 0;
+        // 这里是开始计算的地方
+        // 对于每个read
         for(final GATKRead read : processedReads){
             final byte[] readBases = read.getBases();
             final byte[] readQuals = read.getBaseQualities();
@@ -247,8 +273,8 @@ public abstract class PairHMM implements Closeable{
                 final double[] lk = computeReadLikelihoodGivenHaplotypeLog10(alleleBases,
                         readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
                 logLikelihoods_lowerbound.set(a, readIndex, lk[0]);//lowerbound
-		logLikelihoods_upperbound.set(a,readIndex,lk[1]);//upperbound
-		logLikelihoods_exact.set(a,readIndex,lk[2]);//exact
+                logLikelihoods_upperbound.set(a,readIndex,lk[1]);//upperbound
+                logLikelihoods_exact.set(a,readIndex,lk[2]);//exact
 
                 mLogLikelihoodArray[idx++] = lk[0];
             }
@@ -262,6 +288,8 @@ public abstract class PairHMM implements Closeable{
         }
         //System.err.printf("threadLocalPairHMMComputeTimeDiff=%d\n",threadLocalPairHMMComputeTimeDiff);
     }
+
+
 
     /**
      * Compute the total probability of read arising from haplotypeBases given base substitution, insertion, and deletion
@@ -289,13 +317,13 @@ public abstract class PairHMM implements Closeable{
      */
     @VisibleForTesting
     double[] computeReadLikelihoodGivenHaplotypeLog10( final byte[] haplotypeBases,
-                                                                  final byte[] readBases,
-                                                                  final byte[] readQuals,
-                                                                  final byte[] insertionGOP,
-                                                                  final byte[] deletionGOP,
-                                                                  final byte[] overallGCP,
-                                                                  final boolean recacheReadValues,
-                                                                  final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
+                                                       final byte[] readBases,
+                                                       final byte[] readQuals,
+                                                       final byte[] insertionGOP,
+                                                       final byte[] deletionGOP,
+                                                       final byte[] overallGCP,
+                                                       final boolean recacheReadValues,
+                                                       final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
 
         Utils.validate(initialized, "Must call initialize before calling computeReadLikelihoodGivenHaplotypeLog10");
         Utils.nonNull(haplotypeBases, "haplotypeBases may not be null");
@@ -334,11 +362,43 @@ public abstract class PairHMM implements Closeable{
         // For the next iteration, the hapStartIndex for the next haploytpe becomes the index for the current haplotype
         // The array implementation has to look ahead to the next haplotype to store caching info. It cannot do this if nextHapStart is before hapStart
         hapStartIndex = (nextHapStartIndex < hapStartIndex) ? 0: nextHapStartIndex;
-	final double[] result = new double[3];
-	result[0] = result_approximate[0];
-	result[1] = result_approximate[1];
-	result[2] = result_exact;
+        final double[] result = new double[3];
+        result[0] = result_approximate[0];
+        result[1] = result_approximate[1];
+        result[2] = result_exact;
         return result;
+    }
+
+    // added by Chenhao
+    // 类似上面的 只算一个read和一个hap的likelihood
+    public double computeOneReadLikelihoodGivenHaplotypeLog10(final byte[] haplotypeBases,
+                                                              final byte[] readBases,
+                                                              final byte[] readQuals,
+                                                              final byte[] insertionGOP,
+                                                              final byte[] deletionGOP,
+                                                              final byte[] overallGCP,
+                                                              final boolean recacheReadValues,
+                                                              final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException{
+        // sanity暂时没查 出问题再加上去
+
+        // 不知道是啥 加了再说
+        //paddedReadLength = readBases.length + 1;
+        //paddedHaplotypeLength = haplotypeBases.length + 1;
+        //hapStartIndex =  (recacheReadValues) ? 0 : hapStartIndex;
+
+        // Pre-compute the difference between the current haplotype and the next one to be run
+        // Looking ahead is necessary for the ArrayLoglessPairHMM implementation
+        final int nextHapStartIndex =  (nextHaplotypeBases == null || haplotypeBases.length != nextHaplotypeBases.length) ? 0 : findFirstPositionWhereHaplotypesDiffer(haplotypeBases, nextHaplotypeBases);
+
+        //计算单个值
+        final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
+        // Warning: This assumes no downstream modification of the haplotype bases (saves us from copying the array). It is okay for the haplotype caller.
+        //previousHaplotypeBases = haplotypeBases;
+
+        // For the next iteration, the hapStartIndex for the next haploytpe becomes the index for the current haplotype
+        // The array implementation has to look ahead to the next haplotype to store caching info. It cannot do this if nextHapStart is before hapStart
+        //hapStartIndex = (nextHapStartIndex < hapStartIndex) ? 0: nextHapStartIndex;
+        return result_exact;
     }
 
     /**
@@ -354,23 +414,23 @@ public abstract class PairHMM implements Closeable{
                                                                            final boolean recacheReadValues,
                                                                            final int nextHapStartIndex);
     protected abstract double subComputeReadLikelihoodGivenHaplotypeLog10_exact( final byte[] haplotypeBases,
-                                                                           final byte[] readBases,
-                                                                           final byte[] readQuals,
-                                                                           final byte[] insertionGOP,
-                                                                           final byte[] deletionGOP,
-                                                                           final byte[] overallGCP,
-                                                                           final int hapStartIndex,
-                                                                           final boolean recacheReadValues,
-                                                                           final int nextHapStartIndex);
+                                                                                 final byte[] readBases,
+                                                                                 final byte[] readQuals,
+                                                                                 final byte[] insertionGOP,
+                                                                                 final byte[] deletionGOP,
+                                                                                 final byte[] overallGCP,
+                                                                                 final int hapStartIndex,
+                                                                                 final boolean recacheReadValues,
+                                                                                 final int nextHapStartIndex);
     protected abstract double[] subComputeReadLikelihoodGivenHaplotypeLog10_approximate( final byte[] haplotypeBases,
-                                                                           final byte[] readBases,
-                                                                           final byte[] readQuals,
-                                                                           final byte[] insertionGOP,
-                                                                           final byte[] deletionGOP,
-                                                                           final byte[] overallGCP,
-                                                                           final int hapStartIndex,
-                                                                           final boolean recacheReadValues,
-                                                                           final int nextHapStartIndex);
+                                                                                         final byte[] readBases,
+                                                                                         final byte[] readQuals,
+                                                                                         final byte[] insertionGOP,
+                                                                                         final byte[] deletionGOP,
+                                                                                         final byte[] overallGCP,
+                                                                                         final int hapStartIndex,
+                                                                                         final boolean recacheReadValues,
+                                                                                         final int nextHapStartIndex);
 
     /**
      * Compute the first position at which two haplotypes differ
