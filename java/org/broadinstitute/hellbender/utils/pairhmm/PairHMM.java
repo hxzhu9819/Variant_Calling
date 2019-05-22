@@ -212,7 +212,7 @@ public abstract class PairHMM implements Closeable{
      */
     // added by Chenhao
     // used in Readlikelihoods(filter part when bound check fails)
-    public double recomputeExactLog10Likelihoods(int sampleindex, final GATKRead read, final int indexOfHaplotype,
+    public double recomputeExactLog10Likelihoods(int sampleIndex, final GATKRead read, final int indexOfHaplotype,
                                                  ReadLikelihoods<Haplotype> result_upper,
                                                  final Map<GATKRead, byte[]> gcp,
                                                  final boolean recacheReadValues,
@@ -224,7 +224,7 @@ public abstract class PairHMM implements Closeable{
         final byte[] overallGCP = gcp.get(read);
 
         // get the target haplotype
-        final Allele allele = result_upper.sampleMatrix(sampleindex).getAllele(indexOfHaplotype);
+        final Allele allele = result_upper.sampleMatrix(sampleIndex).getAllele(indexOfHaplotype);
         // initialize the pairHMM
         initialize(read.getLength(), allele.length());
         // calculate the exact result

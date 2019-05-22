@@ -2,21 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1711a98e-9599-4198-b444-c4f085a3fec4" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/java.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../filter_part/test1" beforeDir="false" afterPath="$PROJECT_DIR$/../filter_part/test1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../filter_part/test2" beforeDir="false" afterPath="$PROJECT_DIR$/../filter_part/test2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../filter_part/test3" beforeDir="false" afterPath="$PROJECT_DIR$/../filter_part/test3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../notes.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../filter_part/difference" beforeDir="false" afterPath="$PROJECT_DIR$/../filter_part/difference" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -25,22 +12,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="726">
-              <caret line="781" lean-forward="true" selection-start-line="781" selection-end-line="781" />
-              <folding>
-                <element signature="imports" expanded="true" />
-                <element signature="e#41684#41685#0" expanded="true" />
-                <element signature="e#41769#41770#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -117,6 +89,16 @@
               <item name="hellbender" type="462c0819:PsiDirectoryNode" />
               <item name="tools" type="462c0819:PsiDirectoryNode" />
               <item name="walkers" type="462c0819:PsiDirectoryNode" />
+              <item name="genotyper" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="java" type="b2602c69:ProjectViewProjectNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="org" type="462c0819:PsiDirectoryNode" />
+              <item name="broadinstitute" type="462c0819:PsiDirectoryNode" />
+              <item name="hellbender" type="462c0819:PsiDirectoryNode" />
+              <item name="tools" type="462c0819:PsiDirectoryNode" />
+              <item name="walkers" type="462c0819:PsiDirectoryNode" />
               <item name="haplotypecaller" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
@@ -155,16 +137,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1558397020757</updated>
-      <workItem from="1558397022152" duration="191000" />
+      <workItem from="1558397022152" duration="489000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="191000" />
+    <option name="totallyTimeSpent" value="489000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Image Layers" />
       <window_info id="Designer" />
@@ -265,22 +246,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2233">
+          <caret line="781" lean-forward="true" selection-start-line="781" selection-end-line="781" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="726">
           <caret line="517" lean-forward="true" selection-start-line="517" selection-end-line="517" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="726">
-          <caret line="781" lean-forward="true" selection-start-line="781" selection-end-line="781" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#41684#41685#0" expanded="true" />
-            <element signature="e#41769#41770#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
