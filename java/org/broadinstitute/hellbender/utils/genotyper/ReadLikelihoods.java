@@ -1325,33 +1325,6 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         boolean rm_upperbound=true;
         boolean rm_exact = true;
 
-        // this part for debug
-        if (true){
-            int recompute_squares = 0;
-            final boolean isFirstHaplotype = true;
-            for (int a = 0; a < alleleCount; a++){
-                System.out.println("recompute for hap index: " + a);
-                final List<Haplotype> my_alleles = result_upperbound.sampleMatrix(sampleIndex).alleles();
-                final byte[] nextAlleleBases = a == my_alleles.size() - 1 ? null : my_alleles.get(a + 1).getBases();
-                // check penalty
-                System.out.println("penalty: " + penalty.get(processedRead));
-                double exact_readLikelihood = recompute_tool.recomputeExactLog10Likelihoods(sampleIndex, processedRead, a, result_upperbound, penalty, isFirstHaplotype, nextAlleleBases);
-                // Debug: check the result first
-                if (exact_readLikelihood != result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]){
-                    System.out.println("some error");
-                }
-
-                if (exact_readLikelihood >= log10MaxLikelihoodForTrueAllele){
-                    rm_exact = false;
-                }
-                recompute_squares += read.getLength()*alleles.getAllele(a).getBases().length;
-                filter_work += recompute_squares;
-                valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
-                result_upperbound.valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
-            }
-        }
-
-
         for (int a = 0; a < alleleCount; a++) {
             if (sampleValues[a][readIndex] >= log10MaxLikelihoodForTrueAllele) {
                 rm_lowerbound=false;
@@ -1403,6 +1376,8 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                 final List<Haplotype> my_alleles = result_upperbound.sampleMatrix(sampleIndex).alleles();
                 final byte[] nextAlleleBases = a == my_alleles.size() - 1 ? null : my_alleles.get(a + 1).getBases();
                 double exact_readLikelihood = recompute_tool.recomputeExactLog10Likelihoods(sampleIndex, processedRead, a, result_upperbound, penalty, isFirstHaplotype, nextAlleleBases);
+
+
                 // Debug: check the result first
                 if (exact_readLikelihood >= log10MaxLikelihoodForTrueAllele){
                     rm_exact = false;

@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1711a98e-9599-4198-b444-c4f085a3fec4" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../filter_part/test4" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../filter_part/difference" beforeDir="false" afterPath="$PROJECT_DIR$/../filter_part/difference" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -12,7 +15,22 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="726">
+              <caret line="534" lean-forward="true" selection-start-line="534" selection-end-line="534" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#8456#8457#0" expanded="true" />
+                <element signature="e#8491#8492#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -20,11 +38,11 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
+        <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java" />
+        <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java" />
         <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java" />
         <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" />
-        <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java" />
         <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" />
-        <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java" />
       </list>
     </option>
   </component>
@@ -89,16 +107,6 @@
               <item name="hellbender" type="462c0819:PsiDirectoryNode" />
               <item name="tools" type="462c0819:PsiDirectoryNode" />
               <item name="walkers" type="462c0819:PsiDirectoryNode" />
-              <item name="genotyper" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="java" type="b2602c69:ProjectViewProjectNode" />
-              <item name="java" type="462c0819:PsiDirectoryNode" />
-              <item name="org" type="462c0819:PsiDirectoryNode" />
-              <item name="broadinstitute" type="462c0819:PsiDirectoryNode" />
-              <item name="hellbender" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="walkers" type="462c0819:PsiDirectoryNode" />
               <item name="haplotypecaller" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
@@ -138,27 +146,24 @@
       <option name="presentableId" value="Default" />
       <updated>1558397020757</updated>
       <workItem from="1558397022152" duration="489000" />
+      <workItem from="1558553557051" duration="510000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="489000" />
+    <option name="totallyTimeSpent" value="999000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info id="Image Layers" />
-      <window_info id="Designer" />
-      <window_info id="UI Designer" />
-      <window_info id="Capture Tool" />
-      <window_info id="Favorites" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17453505" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17668097" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Database Changes" />
-      <window_info anchor="bottom" id="Version Control" />
-      <window_info anchor="bottom" id="Terminal" />
-      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info id="Image Layers" order="2" />
+      <window_info id="Designer" order="3" />
+      <window_info id="UI Designer" order="4" />
+      <window_info id="Capture Tool" order="5" />
+      <window_info id="Favorites" order="6" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -166,79 +171,26 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="right" id="Palette" />
-      <window_info anchor="right" id="Theme Preview" />
-      <window_info anchor="right" id="Maven" />
-      <window_info anchor="right" id="Capture Analysis" />
-      <window_info anchor="right" id="Palette&#9;" />
-      <window_info anchor="right" id="Database" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" />
+      <window_info anchor="bottom" id="Database Changes" order="9" />
+      <window_info anchor="bottom" id="Terminal" order="10" />
+      <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Theme Preview" order="4" />
+      <window_info anchor="right" id="Maven" order="5" />
+      <window_info anchor="right" id="Capture Analysis" order="6" />
+      <window_info anchor="right" id="Palette&#9;" order="7" />
+      <window_info anchor="right" id="Database" order="8" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5172">
-          <caret line="473" selection-start-line="473" selection-end-line="473" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1298">
-          <caret line="1941" lean-forward="true" selection-start-line="1941" selection-end-line="1941" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#3776#3777#0" expanded="true" />
-            <element signature="e#3803#3804#0" expanded="true" />
-            <element signature="e#12818#12819#0" expanded="true" />
-            <element signature="e#12870#12871#0" expanded="true" />
-            <element signature="e#13029#13030#0" expanded="true" />
-            <element signature="e#13077#13078#0" expanded="true" />
-            <element signature="e#13376#13377#0" expanded="true" />
-            <element signature="e#13429#13430#0" expanded="true" />
-            <element signature="e#13787#13788#0" expanded="true" />
-            <element signature="e#13839#13840#0" expanded="true" />
-            <element signature="e#13986#13987#0" expanded="true" />
-            <element signature="e#14034#14035#0" expanded="true" />
-            <element signature="e#14330#14331#0" expanded="true" />
-            <element signature="e#14383#14384#0" expanded="true" />
-            <element signature="e#15197#15198#0" expanded="true" />
-            <element signature="e#15230#15231#0" expanded="true" />
-            <element signature="e#30928#30948#0" expanded="true" />
-            <element signature="e#39756#39776#0" expanded="true" />
-            <element signature="e#66717#66718#0" expanded="true" />
-            <element signature="e#66771#66772#0" expanded="true" />
-            <element signature="e#78992#78993#0" expanded="true" />
-            <element signature="e#79057#79058#0" expanded="true" />
-            <element signature="e#84873#84874#0" expanded="true" />
-            <element signature="e#84900#84901#0" expanded="true" />
-            <element signature="e#85148#85149#0" expanded="true" />
-            <element signature="e#85202#85203#0" expanded="true" />
-            <element signature="e#85269#85270#0" expanded="true" />
-            <element signature="e#85310#85311#0" expanded="true" />
-            <element signature="e#85368#85369#0" expanded="true" />
-            <element signature="e#85423#85424#0" expanded="true" />
-            <element signature="e#85477#85478#0" expanded="true" />
-            <element signature="e#85538#85539#0" expanded="true" />
-            <element signature="e#86693#86694#0" expanded="true" />
-            <element signature="e#86749#86750#0" expanded="true" />
-            <element signature="e#86805#86806#0" expanded="true" />
-            <element signature="e#86874#86875#0" expanded="true" />
-            <element signature="e#86945#86946#0" expanded="true" />
-            <element signature="e#87019#87020#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="726">
@@ -248,10 +200,36 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2233">
-          <caret line="781" lean-forward="true" selection-start-line="781" selection-end-line="781" />
+        <state relative-caret-position="662">
+          <caret line="781" selection-start-line="781" selection-end-line="781" />
           <folding>
             <element signature="imports" expanded="true" />
+            <element signature="e#41985#41986#0" expanded="true" />
+            <element signature="e#42070#42071#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="709">
+          <caret line="473" lean-forward="true" selection-start-line="473" selection-end-line="473" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="709">
+          <caret line="1989" lean-forward="true" selection-start-line="1989" selection-end-line="1989" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#72424#72425#0" expanded="true" />
+            <element signature="e#72478#72479#0" expanded="true" />
+            <element signature="e#90580#90581#0" expanded="true" />
+            <element signature="e#90607#90608#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -259,7 +237,12 @@
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="726">
-          <caret line="517" lean-forward="true" selection-start-line="517" selection-end-line="517" />
+          <caret line="534" lean-forward="true" selection-start-line="534" selection-end-line="534" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#8456#8457#0" expanded="true" />
+            <element signature="e#8491#8492#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

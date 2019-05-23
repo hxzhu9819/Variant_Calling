@@ -220,7 +220,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
             computeReadLikelihoods(result_lowerbound.sampleMatrix(i),result_upperbound.sampleMatrix(i),result_exact.sampleMatrix(i));
             // added by Chenhao: add gap penalty to the list
             gapPenalties.add(getPenaltyMap(result_lowerbound.sampleMatrix(i)));
-            processedReadsList.add(getProcessedReads(result_lowerbound.sampleMatrix(i)));
+            processedReadsList.add(modifyReadQualities(result_lowerbound.sampleReads(i)));
         }
 
         //For debug: after HMM

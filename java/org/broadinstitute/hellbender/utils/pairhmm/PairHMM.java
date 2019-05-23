@@ -224,7 +224,7 @@ public abstract class PairHMM implements Closeable{
         final byte[] overallGCP = gcp.get(read);
 
         // get the target haplotype
-        final Allele allele = result_upper.sampleMatrix(sampleIndex).getAllele(indexOfHaplotype);
+        final Allele allele = result_upper.sampleMatrix(sampleIndex).alleles().;
         // initialize the pairHMM
         initialize(read.getLength(), allele.length());
         // calculate the exact result
@@ -382,9 +382,9 @@ public abstract class PairHMM implements Closeable{
         // sanity暂时没查 出问题再加上去
 
         // 不知道是啥 加了再说
-        //paddedReadLength = readBases.length + 1;
-        //paddedHaplotypeLength = haplotypeBases.length + 1;
-        //hapStartIndex =  (recacheReadValues) ? 0 : hapStartIndex;
+        paddedReadLength = readBases.length + 1;
+        paddedHaplotypeLength = haplotypeBases.length + 1;
+        hapStartIndex =  (recacheReadValues) ? 0 : hapStartIndex;
 
         // Pre-compute the difference between the current haplotype and the next one to be run
         // Looking ahead is necessary for the ArrayLoglessPairHMM implementation
@@ -393,11 +393,11 @@ public abstract class PairHMM implements Closeable{
         //计算单个值
         final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
         // Warning: This assumes no downstream modification of the haplotype bases (saves us from copying the array). It is okay for the haplotype caller.
-        //previousHaplotypeBases = haplotypeBases;
+        previousHaplotypeBases = haplotypeBases;
 
         // For the next iteration, the hapStartIndex for the next haploytpe becomes the index for the current haplotype
         // The array implementation has to look ahead to the next haplotype to store caching info. It cannot do this if nextHapStart is before hapStart
-        //hapStartIndex = (nextHapStartIndex < hapStartIndex) ? 0: nextHapStartIndex;
+        hapStartIndex = (nextHapStartIndex < hapStartIndex) ? 0: nextHapStartIndex;
         return result_exact;
     }
 
