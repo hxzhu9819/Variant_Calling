@@ -224,11 +224,17 @@ public abstract class PairHMM implements Closeable{
         final byte[] overallGCP = gcp.get(read);
 
         // get the target haplotype
-        final Allele allele = result_upper.sampleMatrix(sampleIndex).alleles().;
+        final Allele allele = result_upper.sampleMatrix(sampleIndex).alleles().get(indexOfHaplotype);
         // initialize the pairHMM
-        initialize(read.getLength(), allele.length());
+        // initialize(read.getLength(), allele.length());
         // calculate the exact result
         double exact_result = computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, recacheReadValues, nextHaplotypeBases);
+        // original calculation
+        final double[] lk = computeReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, recacheReadValues, nextHaplotypeBases);
+        if (lk[2] != exact_result){
+            System.out.println("lk value: " + lk[2]);
+        }
+
         return exact_result;
     }
 
@@ -267,6 +273,9 @@ public abstract class PairHMM implements Closeable{
             // peek at the next haplotype in the list (necessary to get nextHaplotypeBases, which is required for caching in the array implementation)
             final boolean isFirstHaplotype = true;
             for (int a = 0; a < alleleCount; a++) {
+                // Debug:
+                System.out.println("origin isFirst: " + isFirstHaplotype);
+
                 final Allele allele = alleles.get(a);
                 final byte[] alleleBases = allele.getBases();
                 final byte[] nextAlleleBases = a == alleles.size() - 1 ? null : alleles.get(a + 1).getBases();
@@ -380,6 +389,15 @@ public abstract class PairHMM implements Closeable{
                                                               final boolean recacheReadValues,
                                                               final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException{
         // sanity暂时没查 出问题再加上去
+        Utils.validate(initialized, "Must call initialize before calling computeReadLikelihoodGivenHaplotypeLog10");
+        Utils.nonNull(haplotypeBases, "haplotypeBases may not be null");
+        Utils.validateArg( haplotypeBases.length <= maxHaplotypeLength, () -> "Haplotype bases is too long, got " + haplotypeBases.length + " but max is " + maxHaplotypeLength);
+        Utils.nonNull(readBases);
+        Utils.validateArg( readBases.length <= maxReadLength, () -> "readBases is too long, got " + readBases.length + " but max is " + maxReadLength);
+        Utils.validateArg(readQuals.length == readBases.length, () -> "Read bases and read quals aren't the same size: " + readBases.length + " vs " + readQuals.length);
+        Utils.validateArg( insertionGOP.length == readBases.length, () -> "Read bases and read insertion quals aren't the same size: " + readBases.length + " vs " + insertionGOP.length);
+        Utils.validateArg( deletionGOP.length == readBases.length, () -> "Read bases and read deletion quals aren't the same size: " + readBases.length + " vs " + deletionGOP.length);
+        Utils.validateArg( overallGCP.length == readBases.length, () -> "Read bases and overall GCP aren't the same size: " + readBases.length + " vs " + overallGCP.length);
 
         // 不知道是啥 加了再说
         paddedReadLength = readBases.length + 1;

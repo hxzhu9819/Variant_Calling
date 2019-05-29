@@ -217,10 +217,11 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
 
         // 计算小表格
         for (int i = 0; i < sampleCount; i++) {
-            computeReadLikelihoods(result_lowerbound.sampleMatrix(i),result_upperbound.sampleMatrix(i),result_exact.sampleMatrix(i));
+            // computeReadLikelihoods(result_lowerbound.sampleMatrix(i),result_upperbound.sampleMatrix(i),result_exact.sampleMatrix(i));
             // added by Chenhao: add gap penalty to the list
-            gapPenalties.add(getPenaltyMap(result_lowerbound.sampleMatrix(i)));
-            processedReadsList.add(modifyReadQualities(result_lowerbound.sampleReads(i)));
+            processedReadsList.add(modifyReadQualities(result_lowerbound.sampleMatrix(i).reads()));
+            gapPenalties.add(getPenaltyMap(processedReadsList.get(i)));
+            computeReadLikelihoods(result_lowerbound.sampleMatrix(i),result_upperbound.sampleMatrix(i),result_exact.sampleMatrix(i), gapPenalties.get(i), processedReadsList.get(i));
         }
 
         //For debug: after HMM
@@ -237,7 +238,9 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         //result_upperbound.printlikelihoods();
 
         // added by Chenhao: new parameter penalty and processed reads
-        result_lowerbound.filterPoorlyModeledReads(EXPECTED_ERROR_RATE_PER_BASE, result_upperbound,result_exact, gapPenalties, processedReadsList);
+        // added by Chenhao: new parameter cap difference
+        result_lowerbound.filterPoorlyModeledReads(EXPECTED_ERROR_RATE_PER_BASE, result_upperbound,result_exact,
+                gapPenalties, processedReadsList, log10globalReadMismappingRate);
         //For debug: after filter
         //System.err.print("Xiao:walker/haplotypecaller/PairHMMLikelihoodCalculationEngin/computeReadLikelihoods: right after filter poor reads\n");
         //result_lowerbound.printlikelihoods();
@@ -324,14 +327,15 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
     //    writeDebugLikelihoods(likelihoods);
     //}
 
-    //Prune
-    //Method
-    private void computeReadLikelihoods(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,final LikelihoodMatrix<Haplotype> likelihoods_upperbound,final LikelihoodMatrix<Haplotype> likelihoods_exact) {
+    //Prune Method
+    // Modified by Chenhao
+    private void computeReadLikelihoods(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,final LikelihoodMatrix<Haplotype> likelihoods_upperbound,
+                                        final LikelihoodMatrix<Haplotype> likelihoods_exact, Map<GATKRead, byte[]> gapContinuationPenalties, List<GATKRead> processedReads) {
         // Modify the read qualities by applying the PCR error model and capping the minimum base,insertion,deletion qualities
-        final List<GATKRead> processedReads = modifyReadQualities(likelihoods_lowerbound.reads());
+        // final List<GATKRead> processedReads = modifyReadQualities(likelihoods_lowerbound.reads());
 
 
-        final Map<GATKRead, byte[]> gapContinuationPenalties = buildGapContinuationPenalties(processedReads, constantGCP);
+        // final Map<GATKRead, byte[]> gapContinuationPenalties = buildGapContinuationPenalties(processedReads, constantGCP);
 
         // Run the PairHMM to calculate the log10 likelihood of each (processed) reads' arising from each haplotype
         pairHMM.computeLog10Likelihoods(likelihoods_lowerbound,likelihoods_upperbound,likelihoods_exact, processedReads, gapContinuationPenalties);
@@ -342,8 +346,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
 
     // added by Chenhao
     // generate the GapContinuationPenalties
-    public Map<GATKRead, byte[]> getPenaltyMap(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound){
-        final List<GATKRead> processedReads = modifyReadQualities(likelihoods_lowerbound.reads());
+    public Map<GATKRead, byte[]> getPenaltyMap(final List<GATKRead> processedReads){
         final Map<GATKRead, byte[]> gapContinuationPenalties = buildGapContinuationPenalties(processedReads, constantGCP);
         return gapContinuationPenalties;
     }
