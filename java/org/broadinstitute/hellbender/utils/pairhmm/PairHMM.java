@@ -9,6 +9,7 @@ import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.LikelihoodMatrix;
+// added by Chenhao: import ReadLikelihoods
 import org.broadinstitute.hellbender.utils.genotyper.ReadLikelihoods;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -210,34 +211,6 @@ public abstract class PairHMM implements Closeable{
      * @param gcp penalty for gap continuations base array map for processed reads.
      *
      */
-    // added by Chenhao
-    // used in Readlikelihoods(filter part when bound check fails)
-    public double recomputeExactLog10Likelihoods(int sampleIndex, final GATKRead read, final int indexOfHaplotype,
-                                                 ReadLikelihoods<Haplotype> result_upper,
-                                                 final Map<GATKRead, byte[]> gcp,
-                                                 final boolean recacheReadValues,
-                                                 final byte[] nextHaplotypeBases){
-        final byte[] readBases = read.getBases();
-        final byte[] readQuals = read.getBaseQualities();
-        final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(read);
-        final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(read);
-        final byte[] overallGCP = gcp.get(read);
-
-        // get the target haplotype
-        final Allele allele = result_upper.sampleMatrix(sampleIndex).alleles().get(indexOfHaplotype);
-        // initialize the pairHMM
-        // initialize(read.getLength(), allele.length());
-        // calculate the exact result
-        double exact_result = computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, recacheReadValues, nextHaplotypeBases);
-        // original calculation
-        final double[] lk = computeReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, recacheReadValues, nextHaplotypeBases);
-        if (lk[2] != exact_result){
-            System.out.println("lk value: " + lk[2]);
-        }
-
-        return exact_result;
-    }
-
     public void computeLog10Likelihoods(final LikelihoodMatrix<Haplotype> logLikelihoods_lowerbound,final LikelihoodMatrix<Haplotype> logLikelihoods_upperbound,final LikelihoodMatrix<Haplotype> logLikelihoods_exact,
                                         final List<GATKRead> processedReads,
                                         final Map<GATKRead, byte[]> gcp) {
@@ -248,7 +221,6 @@ public abstract class PairHMM implements Closeable{
             startTime = System.nanoTime();
         }
         // (re)initialize the pairHMM only if necessary
-        // 这里是在初始化 暂时不管
         final int readMaxLength = findMaxReadLength(processedReads);
         final int haplotypeMaxLength = findMaxAlleleLength(logLikelihoods_lowerbound.alleles());
         if (!initialized || readMaxLength > maxReadLength || haplotypeMaxLength > maxHaplotypeLength) {
@@ -261,8 +233,7 @@ public abstract class PairHMM implements Closeable{
         mLogLikelihoodArray = new double[readCount * alleleCount];
         int idx = 0;
         int readIndex = 0;
-        // 这里是开始计算的地方
-        // 对于每个read
+
         for(final GATKRead read : processedReads){
             final byte[] readBases = read.getBases();
             final byte[] readQuals = read.getBaseQualities();
@@ -273,9 +244,6 @@ public abstract class PairHMM implements Closeable{
             // peek at the next haplotype in the list (necessary to get nextHaplotypeBases, which is required for caching in the array implementation)
             final boolean isFirstHaplotype = true;
             for (int a = 0; a < alleleCount; a++) {
-                // Debug:
-                System.out.println("origin isFirst: " + isFirstHaplotype);
-
                 final Allele allele = alleles.get(a);
                 final byte[] alleleBases = allele.getBases();
                 final byte[] nextAlleleBases = a == alleles.size() - 1 ? null : alleles.get(a + 1).getBases();
@@ -297,8 +265,6 @@ public abstract class PairHMM implements Closeable{
         }
         //System.err.printf("threadLocalPairHMMComputeTimeDiff=%d\n",threadLocalPairHMMComputeTimeDiff);
     }
-
-
 
     /**
      * Compute the total probability of read arising from haplotypeBases given base substitution, insertion, and deletion
@@ -325,14 +291,14 @@ public abstract class PairHMM implements Closeable{
      * @return the log10 probability of read coming from the haplotype under the provided error model
      */
     @VisibleForTesting
-    double[] computeReadLikelihoodGivenHaplotypeLog10( final byte[] haplotypeBases,
-                                                       final byte[] readBases,
-                                                       final byte[] readQuals,
-                                                       final byte[] insertionGOP,
-                                                       final byte[] deletionGOP,
-                                                       final byte[] overallGCP,
-                                                       final boolean recacheReadValues,
-                                                       final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
+    public double[] computeReadLikelihoodGivenHaplotypeLog10( final byte[] haplotypeBases,
+                                                              final byte[] readBases,
+                                                              final byte[] readQuals,
+                                                              final byte[] insertionGOP,
+                                                              final byte[] deletionGOP,
+                                                              final byte[] overallGCP,
+                                                              final boolean recacheReadValues,
+                                                              final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
 
         Utils.validate(initialized, "Must call initialize before calling computeReadLikelihoodGivenHaplotypeLog10");
         Utils.nonNull(haplotypeBases, "haplotypeBases may not be null");
@@ -378,17 +344,21 @@ public abstract class PairHMM implements Closeable{
         return result;
     }
 
-    // added by Chenhao
-    // 类似上面的 只算一个read和一个hap的likelihood
-    public double computeOneReadLikelihoodGivenHaplotypeLog10(final byte[] haplotypeBases,
-                                                              final byte[] readBases,
-                                                              final byte[] readQuals,
-                                                              final byte[] insertionGOP,
-                                                              final byte[] deletionGOP,
-                                                              final byte[] overallGCP,
-                                                              final boolean recacheReadValues,
-                                                              final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException{
-        // sanity暂时没查 出问题再加上去
+    // added by Chenhao: print pairHMM info
+    public void printInfo(){
+        System.out.println(maxHaplotypeLength + " " + maxReadLength);
+    }
+
+    // added by Chenhao: similar to the function above, but only calculate one Read-Hap likelihood
+    public double computeOneReadLikelihoodGivenHaplotypeLog10( final byte[] haplotypeBases,
+                                                               final byte[] readBases,
+                                                               final byte[] readQuals,
+                                                               final byte[] insertionGOP,
+                                                               final byte[] deletionGOP,
+                                                               final byte[] overallGCP,
+                                                               final boolean recacheReadValues,
+                                                               final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
+
         Utils.validate(initialized, "Must call initialize before calling computeReadLikelihoodGivenHaplotypeLog10");
         Utils.nonNull(haplotypeBases, "haplotypeBases may not be null");
         Utils.validateArg( haplotypeBases.length <= maxHaplotypeLength, () -> "Haplotype bases is too long, got " + haplotypeBases.length + " but max is " + maxHaplotypeLength);
@@ -399,25 +369,31 @@ public abstract class PairHMM implements Closeable{
         Utils.validateArg( deletionGOP.length == readBases.length, () -> "Read bases and read deletion quals aren't the same size: " + readBases.length + " vs " + deletionGOP.length);
         Utils.validateArg( overallGCP.length == readBases.length, () -> "Read bases and overall GCP aren't the same size: " + readBases.length + " vs " + overallGCP.length);
 
-        // 不知道是啥 加了再说
         paddedReadLength = readBases.length + 1;
         paddedHaplotypeLength = haplotypeBases.length + 1;
-        hapStartIndex =  (recacheReadValues) ? 0 : hapStartIndex;
 
+        hapStartIndex =  (recacheReadValues) ? 0 : hapStartIndex;
         // Pre-compute the difference between the current haplotype and the next one to be run
         // Looking ahead is necessary for the ArrayLoglessPairHMM implementation
         final int nextHapStartIndex =  (nextHaplotypeBases == null || haplotypeBases.length != nextHaplotypeBases.length) ? 0 : findFirstPositionWhereHaplotypesDiffer(haplotypeBases, nextHaplotypeBases);
+        //long start=System.nanoTime();
+        //final double[] result_approximate = subComputeReadLikelihoodGivenHaplotypeLog10_approximate(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
+        //long elapsedTime = System.nanoTime()-start;
+        //System.err.printf("time to do appro=%d\n",elapsedTime);
 
-        //计算单个值
+        //start=System.nanoTime();
         final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
-        // Warning: This assumes no downstream modification of the haplotype bases (saves us from copying the array). It is okay for the haplotype caller.
-        previousHaplotypeBases = haplotypeBases;
+        //elapsedTime = System.nanoTime()-start;
+        //System.err.printf("time to do exact=%d\n",elapsedTime);
 
-        // For the next iteration, the hapStartIndex for the next haploytpe becomes the index for the current haplotype
-        // The array implementation has to look ahead to the next haplotype to store caching info. It cannot do this if nextHapStart is before hapStart
+        //Utils.validate(result_approximate[0] <= 0.0, () -> "PairHMM Log Probability cannot be greater than 0: " + String.format("haplotype: %s, read: %s, result: %f, PairHMM: %s", new String(haplotypeBases), new String(readBases), result_approximate[0], this.getClass().getSimpleName()));
+        //Utils.validate(MathUtils.goodLog10Probability(result_approximate[0]), () -> "Invalid Log Probability: " + result_approximate[0]);
+
+        previousHaplotypeBases = haplotypeBases;
         hapStartIndex = (nextHapStartIndex < hapStartIndex) ? 0: nextHapStartIndex;
         return result_exact;
     }
+
 
     /**
      * To be implemented by subclasses to do calculation for #computeReadLikelihoodGivenHaplotypeLog10

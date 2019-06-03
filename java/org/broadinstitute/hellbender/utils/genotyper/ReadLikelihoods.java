@@ -1216,25 +1216,12 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
     //Prune method
     // added by Chenhao: new parameter -- gapPenalties and processedreadlist
     // added by Chenhao: new parameter -- cap difference
-    public void filterPoorlyModeledReads(final double maximumErrorPerBase,
-                                         ReadLikelihoods<Haplotype> result_upperbound,
-                                         ReadLikelihoods<Haplotype> result_exact,
-                                         List<Map<GATKRead, byte[]>> gapPenalties,
-                                         List<List<GATKRead>> processedReadList,
-                                         final double cap_difference) {
+    public void filterPoorlyModeledReads(final double maximumErrorPerBase, ReadLikelihoods<Haplotype> result_upperbound, ReadLikelihoods<Haplotype> result_exact, List<Map<GATKRead, byte[]>> gapPenalties, List<List<GATKRead>> processedReadList, final double cap_difference) {
         Utils.validateArg(alleles.numberOfAlleles() > 0, "unsupported for read-likelihood collections with no alleles");
         Utils.validateArg(!Double.isNaN(maximumErrorPerBase) && maximumErrorPerBase > 0.0, "the maximum error per base must be a positive number");
-        //Haoxuan added
-        num_reads = 0;
-        unknown = 0;
-        saved_by_lower = 0;
-        delete_by_upper = 0;
-        //added by Chenhao
-        original_work = 0;
-        filter_work = 0;
 
         new IndexRange(0, samples.numberOfSamples()).forEach(s -> {
-            // added by Chenhao: check if order matters
+            // added by Chenhao: Debug check if order matters
             final List<GATKRead> my_sampleReads = sampleMatrix(s).reads();
 
             final GATKRead[] sampleReads = readsBySampleIndex[s];
@@ -1243,11 +1230,8 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             List<GATKRead> processedReads = processedReadList.get(s);
 
             // added by Chenhao: new parameter -- penalty
-            // added by Chenhao: new parameter -- cap difference
             final List<Integer> removeIndices = new IndexRange(0, sampleReads.length)
-                    .filter(r -> readIsPoorlyModelled(s, r, my_sampleReads.get(r), maximumErrorPerBase,
-                            result_upperbound,result_exact, penalty, processedReads.get(r),
-                            cap_difference));
+                    .filter(r -> readIsPoorlyModelled(s, r, my_sampleReads.get(r), maximumErrorPerBase, result_upperbound,result_exact, penalty, processedReads.get(r), cap_difference));
 
             removeSampleReads(s, removeIndices, alleles.numberOfAlleles());
             result_upperbound.removeSampleReads(s, removeIndices, alleles.numberOfAlleles());
@@ -1296,15 +1280,47 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         }
         return true;
     }
+
+    // added by Chenhao: Debug -- just for test
+    public void recomputeAll(final LikelihoodMatrix<Haplotype> logLikelihoods_lowerbound,final LikelihoodMatrix<Haplotype> logLikelihoods_upperbound,final LikelihoodMatrix<Haplotype> logLikelihoods_exact,
+                             final List<GATKRead> processedReads,
+                             final Map<GATKRead, byte[]> gcp){
+        final int readCount = processedReads.size();
+        final List<Haplotype> alleles = logLikelihoods_lowerbound.alleles();
+        final int alleleCount = alleles.size();
+
+        for(int readIndex = 0; readIndex < readCount; readIndex++) {
+            GATKRead read = processedReads.get(readIndex);
+            final byte[] readBases = read.getBases();
+            final byte[] readQuals = read.getBaseQualities();
+            final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(read);
+            final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(read);
+            final byte[] overallGCP = gcp.get(read);
+
+            final boolean isFirstHaplotype = true;
+
+            for (int a = 0; a < alleleCount; a++) {
+                final Allele allele = alleles.get(a);
+                final byte[] alleleBases = allele.getBases();
+                final byte[] nextAlleleBases = a == alleles.size() - 1 ? null : alleles.get(a + 1).getBases();
+                final double lk = recompute_tool.computeOneReadLikelihoodGivenHaplotypeLog10(alleleBases,
+                        readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
+
+                if (lk != logLikelihoods_exact.get(a, readIndex)){
+                    System.out.println("Allele: " + a +  " my value: " + lk + " his value: " + logLikelihoods_exact.get(a, readIndex));
+                    System.out.println("-----");
+                }
+                // logLikelihoods_lowerbound.set(a, readIndex, lk[0]);//lowerbound
+                // logLikelihoods_upperbound.set(a,readIndex,lk[1]);//upperbound
+                // logLikelihoods_exact.set(a,readIndex,lk[2]);//exact
+            }
+        }
+    }
+
     //Prune method
     // added by Chenhao: new parameter -- penalty and processedreads
     // added by Chenhao: new parameter -- cap difference
-    private boolean readIsPoorlyModelled(final int sampleIndex, final int readIndex, final GATKRead read, final double maxErrorRatePerBase,
-                                         ReadLikelihoods<Haplotype> result_upperbound,
-                                         ReadLikelihoods<Haplotype> result_exact,
-                                         final Map<GATKRead, byte[]> penalty,
-                                         final GATKRead processedRead,
-                                         final double cap_difference) {
+    private boolean readIsPoorlyModelled(final int sampleIndex, final int readIndex, final GATKRead read, final double maxErrorRatePerBase,ReadLikelihoods<Haplotype> result_upperbound, ReadLikelihoods<Haplotype> result_exact, final Map<GATKRead, byte[]> penalty, final GATKRead processedRead, final double cap_difference) {
         final double maxErrorsForRead = Math.min(2.0, Math.ceil(read.getLength() * maxErrorRatePerBase));
         final double log10QualPerBase = -4.0;
         final double log10MaxLikelihoodForTrueAllele = maxErrorsForRead * log10QualPerBase;
@@ -1315,39 +1331,33 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         boolean rm_upperbound=true;
         boolean rm_exact = true;
         // Chenhao: for debug
-        if (true){
-            final boolean isFirstHaplotype = true;
-            final byte[] readBases = processedRead.getBases();
-            final byte[] readQuals = processedRead.getBaseQualities();
-            final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(processedRead);
-            final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(processedRead);
-            final byte[] overallGCP = penalty.get(processedRead);
+	    /*
+	    if (true){
+		int recompute_squares = 0;
+	    	recomputeOneRead(sampleIndex, readIndex, read, result_upperbound, penalty, processedRead, alleleCount, recompute_squares);
 
-            for (int a = 0; a < alleleCount; a++){
-                // get the target haplotype
-                final Allele allele = result_upperbound.sampleMatrix(sampleIndex).alleles().get(a);
-                final List<Haplotype> my_alleles = result_upperbound.sampleMatrix(sampleIndex).alleles();
-                final byte[] nextAlleleBases = a == my_alleles.size() - 1 ? null : my_alleles.get(a + 1).getBases();
+		// added by Chenhao: now need to normalize the likelihood
+		normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
+            	result_upperbound.normalizeLikelihoodsPerRead(cap_difference, result_upperbound.valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
+            	for (int a = 0; a < alleleCount; a++){
+		    // Debug: check the values
 
-                double exact_readLikelihood = recompute_tool.computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
-                // double exact_readLikelihood = recompute_tool.recomputeExactLog10Likelihoods(sampleIndex, processedRead, a, result_upperbound, penalty, isFirstHaplotype, nextAlleleBases);
-                valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
-                result_upperbound.valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
-            }
-            // added by Chenhao: now need to normalize the likelihood
-            normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
-            result_upperbound.normalizeLikelihoodsPerRead(cap_difference, result_upperbound.valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
-            for (int a = 0; a < alleleCount; a++){
-                // Debug: check the values
-                if (valuesBySampleIndex[sampleIndex][a][readIndex] != result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]){
-                    System.out.println("Allele: " + a +  " my value: " + valuesBySampleIndex[sampleIndex][a][readIndex] + " his value: " + result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]);
+		    if (valuesBySampleIndex[sampleIndex][a][readIndex] != result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]){
+                    System.out.println("og read: " + result_exact.sampleMatrix(sampleIndex).getRead(readIndex).getBasesString());
+                    System.out.println("my read: " + processedRead.getBasesString());
+		    System.out.println("tt read: " + read.getBasesString());
+                    System.out.println("og allele: " + result_exact.sampleMatrix(sampleIndex).getAllele(a));
+                    System.out.println("my allele: " + sampleMatrix(sampleIndex).alleles().get(a));
+		    System.out.println("Allele: " + a +  " my value: " + valuesBySampleIndex[sampleIndex][a][readIndex] + " his value: " + result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]);
                     System.out.println("-----");
-                }
-                if (valuesBySampleIndex[sampleIndex][a][readIndex] >= log10MaxLikelihoodForTrueAllele){
+                    }
+
+		if (valuesBySampleIndex[sampleIndex][a][readIndex] >= log10MaxLikelihoodForTrueAllele){
                     rm_exact = false;
-                }
-            }
-        }
+                    }
+		}
+	    }
+  	    */
 
         for (int a = 0; a < alleleCount; a++) {
             if (sampleValues[a][readIndex] >= log10MaxLikelihoodForTrueAllele) {
@@ -1390,36 +1400,18 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             //}
 
             // added by Chenhao: the following is the recompute version
+            recomputeOneRead(sampleIndex, readIndex, read, result_upperbound, penalty, processedRead, alleleCount, recompute_squares);
 
-            final boolean isFirstHaplotype = true;
-            final byte[] readBases = processedRead.getBases();
-            final byte[] readQuals = processedRead.getBaseQualities();
-            final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(processedRead);
-            final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(processedRead);
-            final byte[] overallGCP = penalty.get(processedRead);
-
-            for (int a = 0; a < alleleCount; a++){
-                // get the target haplotype
-                final Allele allele = result_upperbound.sampleMatrix(sampleIndex).alleles().get(a);
-                final List<Haplotype> my_alleles = result_upperbound.sampleMatrix(sampleIndex).alleles();
-                final byte[] nextAlleleBases = a == my_alleles.size() - 1 ? null : my_alleles.get(a + 1).getBases();
-
-                double exact_readLikelihood = recompute_tool.computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
-                // double exact_readLikelihood = recompute_tool.recomputeExactLog10Likelihoods(sampleIndex, processedRead, a, result_upperbound, penalty, isFirstHaplotype, nextAlleleBases);
-                recompute_squares += read.getLength()*alleles.getAllele(a).getBases().length;
-                filter_work += recompute_squares;
-                valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
-                result_upperbound.valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
-            }
             // added by Chenhao: now need to normalize the likelihood
             normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
             result_upperbound.normalizeLikelihoodsPerRead(cap_difference, result_upperbound.valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
             for (int a = 0; a < alleleCount; a++){
                 // Debug: check the values
                 if (valuesBySampleIndex[sampleIndex][a][readIndex] != result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]){
-                    System.out.println("Allele: " + a +  " my value: " + valuesBySampleIndex[sampleIndex][a][readIndex] + " his value: " + result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]);
+                    System.out.println("Allele: " + a + " my value: " + valuesBySampleIndex[sampleIndex][a][readIndex] + " his value: " + result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]);
                     System.out.println("-----");
                 }
+                // Determine whether to keep the read
                 if (valuesBySampleIndex[sampleIndex][a][readIndex] >= log10MaxLikelihoodForTrueAllele){
                     rm_exact = false;
                 }
@@ -1429,6 +1421,35 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             return rm_exact;
         }
     }
+
+    // added by Chenhao: recompute function (one read)
+    public void recomputeOneRead(final int sampleIndex, final int readIndex, final GATKRead read,
+                                 ReadLikelihoods<Haplotype> result_upperbound,
+                                 final Map<GATKRead, byte[]> penalty,
+                                 final GATKRead processedRead,
+                                 final int alleleCount,
+                                 int recompute_squares){
+        final boolean isFirstHaplotype = true;
+        final byte[] readBases = processedRead.getBases();
+        final byte[] readQuals = processedRead.getBaseQualities();
+        final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(processedRead);
+        final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(processedRead);
+        final byte[] overallGCP = penalty.get(processedRead);
+
+        for (int a = 0; a < alleleCount; a++){
+            // get the target haplotype
+            final Allele allele = result_upperbound.sampleMatrix(sampleIndex).alleles().get(a);
+            final List<Haplotype> my_alleles = result_upperbound.sampleMatrix(sampleIndex).alleles();
+            final byte[] nextAlleleBases = a == my_alleles.size() - 1 ? null : my_alleles.get(a + 1).getBases();
+
+            double exact_readLikelihood = recompute_tool.computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
+            recompute_squares += read.getLength()*alleles.getAllele(a).getBases().length;
+            filter_work += recompute_squares;
+            valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
+            result_upperbound.valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
+        }
+    }
+
 
     /**
      * Add more reads to the collection.

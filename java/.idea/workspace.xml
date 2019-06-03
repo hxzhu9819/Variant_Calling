@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1711a98e-9599-4198-b444-c4f085a3fec4" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../filter_part/difference" beforeDir="false" afterPath="$PROJECT_DIR$/../filter_part/difference" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java" afterDir="false" />
@@ -41,7 +40,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
+      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -88,7 +87,7 @@
           <select />
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -123,16 +122,17 @@
       <workItem from="1558397022152" duration="489000" />
       <workItem from="1558553557051" duration="631000" />
       <workItem from="1559141935266" duration="139000" />
+      <workItem from="1559575379037" duration="114000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1259000" />
+    <option name="totallyTimeSpent" value="1373000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14520743" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14735337" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -187,18 +187,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3559">
-          <caret line="537" lean-forward="true" selection-start-line="537" selection-end-line="537" />
+        <state relative-caret-position="662">
+          <caret line="534" lean-forward="true" selection-start-line="534" selection-end-line="534" />
           <folding>
             <element signature="imports" expanded="true" />
+            <element signature="e#8470#8471#0" expanded="true" />
+            <element signature="e#8505#8506#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="709">
-          <caret line="2025" lean-forward="true" selection-start-line="2025" selection-end-line="2025" />
+        <state relative-caret-position="325">
+          <caret line="2016" column="17" lean-forward="true" selection-start-line="2016" selection-start-column="17" selection-end-line="2016" selection-end-column="17" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#3807#3808#0" expanded="true" />
@@ -217,10 +219,12 @@
             <element signature="e#15713#15714#0" expanded="true" />
             <element signature="e#16527#16528#0" expanded="true" />
             <element signature="e#16560#16561#0" expanded="true" />
-            <element signature="e#70921#70922#0" expanded="true" />
-            <element signature="e#70975#70976#0" expanded="true" />
-            <element signature="e#89077#89078#0" expanded="true" />
-            <element signature="e#89104#89105#0" expanded="true" />
+            <element signature="e#32076#32096#0" expanded="true" />
+            <element signature="e#40125#40145#0" expanded="true" />
+            <element signature="e#75881#75882#0" expanded="true" />
+            <element signature="e#75935#75936#0" expanded="true" />
+            <element signature="e#94037#94038#0" expanded="true" />
+            <element signature="e#94064#94065#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -228,9 +232,15 @@
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="709">
-          <caret line="491" lean-forward="true" selection-start-line="491" selection-end-line="491" />
+          <caret line="467" lean-forward="true" selection-start-line="467" selection-end-line="467" />
           <folding>
             <element signature="imports" expanded="true" />
+            <element signature="e#6378#6379#0" expanded="true" />
+            <element signature="e#6424#6425#0" expanded="true" />
+            <element signature="e#6490#6491#0" expanded="true" />
+            <element signature="e#6540#6541#0" expanded="true" />
+            <element signature="e#20469#20470#0" expanded="true" />
+            <element signature="e#20545#20546#0" expanded="true" />
           </folding>
         </state>
       </provider>
