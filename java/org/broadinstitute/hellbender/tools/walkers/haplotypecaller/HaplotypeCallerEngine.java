@@ -586,6 +586,8 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         for (String key : reads.keySet()){
             System.out.println("#number: " + reads.get(key).size());
         }
+        // added by Chenhao: debug
+        System.out.println(region.toString());
 
         // 第三步
         // Calculate the likelihoods: CPU intensive part.
@@ -623,7 +625,10 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
                 hcArgs.maxMnpDistance,
                 readsHeader,
                 haplotypeBAMWriter.isPresent());
-        //------------------
+
+        // results are prepared------------------
+        // added by Chenhao: print statics
+        readLikelihoods.get(0).get_statics();
 
         if ( haplotypeBAMWriter.isPresent() ) {
             final Set<Haplotype> calledHaplotypeSet = new HashSet<>(calledHaplotypes.getCalledHaplotypes());

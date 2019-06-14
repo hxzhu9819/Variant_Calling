@@ -271,12 +271,6 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
 
             final Map<Allele, List<Haplotype>> alleleMapper = createAlleleMapper(mergedVC, loc, haplotypes, activeAllelesToGenotype);
             // 这里的alleleMapper是一个Allele和Hap的映射
-            // added by Chenhao (for test)
-            System.out.println("alleleMapper: " + alleleMapper.keySet());
-            for(Allele key : alleleMapper.keySet()){
-                System.out.println(key + ": " + alleleMapper.get(key).toString());
-            }
-
             if( configuration.debug && logger != null ) {
                 logger.info("Genotyping event at " + loc + " with alleles = " + mergedVC.getAlleles());
             }
@@ -588,7 +582,7 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
      * @param mergedVC               Input VC with event to genotype
      * @return                       GenotypesContext object wrapping genotype objects with PLs
      */
-    //Original Method 
+    //Original Method
     protected GenotypesContext calculateGLsForThisEvent(final ReadLikelihoods<Allele> readLikelihoods, final VariantContext mergedVC, final List<Allele> noCallAlleles ) {
         Utils.nonNull(readLikelihoods, "readLikelihoods");
         Utils.nonNull(mergedVC, "mergedVC");
@@ -634,12 +628,14 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
 
         //if this region is already recomputed, then no need to combine bounds or examine for recompute
         if(exact_only[0]){
+            // 这里应该传0或者1（recompute过的lower或upper矩阵）
             result.add(calculateGLsForThisEvent(readLikelihoods.get(2),mergedVC,noCallAlleles));
             return result;
         }
 
         final List<Allele> vcAlleles = mergedVC.getAlleles();
         final AlleleList<Allele> alleleList = readLikelihoods.get(0).numberOfAlleles() == vcAlleles.size() ? readLikelihoods.get(0) : new IndexedAlleleList<>(vcAlleles);
+        // result是lower upper和exact的list
         final List<GenotypingLikelihoods<Allele>> likelihoods = genotypingModel.calculateLikelihoods(alleleList,new GenotypingData<>(ploidyModel,readLikelihoods.get(0)),new GenotypingData<>(ploidyModel,readLikelihoods.get(1)),new GenotypingData<>(ploidyModel,readLikelihoods.get(2)));//[0] lowerbound [1] upperbound [2] exact
 
 
@@ -772,11 +768,11 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
 
         //Note that the return list size can be 1 or 3 or 5 or 7. This is assuming only 1 sample
         //if bounds are crossed, the entire result is replaced with exact results. So there is only 1 return result;
-        //if bounds are not crossed && biallic case:            
+        //if bounds are not crossed && biallic case:
         //  result[0]=guaranteed pass if pass
         //  result[1]=guaranteed fail if fail
         //  result[2]=exact
-        //if bounds are not crossed && multiple alleles with RA or AA best case: 
+        //if bounds are not crossed && multiple alleles with RA or AA best case:
         //  result[0]=guarantee to pass with {RR,XR,XX}
         //  result[1]=guarantee to pass with {XX,XA,AA}
         //  result[2]=guarantee to fail with {RR,XR,XX}
@@ -805,7 +801,7 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
             for(int i=0; i<genotypelikelihoods_pass.size();i++){
                 //for(int g=0;g<genotypelikelihoods_pass.get(i).getAsVector().length;g++){
                 //System.err.printf("Xiao:tools/walkers/haplotypecaller/HaplotypeCallerGenotypingENgine.java/calculateGLsForThisEvent: likelihood set pass %d: likelihood[%d]=%f\n",i,g,genotypelikelihoods_pass.get(i).getAsVector()[g]);
-                //} 
+                //}
                 final GenotypesContext result_pass = GenotypesContext.create(sampleCount);
                 result_pass.add(new GenotypeBuilder(samples.getSample(s)).alleles(noCallAlleles).PL(genotypelikelihoods_pass.get(i).getAsPLs()).make());
                 result.add(result_pass);
@@ -814,7 +810,7 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
                 //for(int g=0;g<genotypelikelihoods_fail.get(i).getAsVector().length;g++){
                 //System.err.printf("Xiao:tools/walkers/haplotypecaller/HaplotypeCallerGenotypingENgine.java/calculateGLsForThisEvent: likelihood set fail %d: likelihood[%d]=%f\n",i,g,genotypelikelihoods_fail.get(i).getAsVector()[g]);
 
-                //} 
+                //}
                 final GenotypesContext result_fail = GenotypesContext.create(sampleCount);
                 result_fail.add(new GenotypeBuilder(samples.getSample(s)).alleles(noCallAlleles).PL(genotypelikelihoods_fail.get(i).getAsPLs()).make());
                 result.add(result_fail);

@@ -84,6 +84,21 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
     //Chenhao added this
     private PairHMM recompute_tool = null;
 
+    // added by Chenhao: 6/8
+    public List<Map<GATKRead, byte[]>> gapPenalties = new ArrayList<>();
+
+    public List<List<GATKRead>> processedReadsList = new ArrayList<>();
+
+    private double cap_difference = 0;
+
+    // added by Chenhao: 6/13
+    private long original_work = 0;
+
+    private long filter_work = 0;
+
+    private long redo_work = 0;
+
+
     /**
      * Maps from each read to its index within the sample.
      *
@@ -525,6 +540,30 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
 
     }
 
+    // added by Chenhao: normalize for allele-read table
+    private void normalizeAlleleGivenBestValue(final double[][] newsamplevalues, final int newAlleleCount,
+                                               final int readIndex, final double cap_difference,
+                                               final double best_value){
+        double worst_likelihood = best_value + cap_difference;
+        for (int a = 0; a < newAlleleCount; a++){
+            if (newsamplevalues[a][readIndex] < worst_likelihood){
+                newsamplevalues[a][readIndex] = worst_likelihood;
+            }
+        }
+    }
+
+    private void normalizePerReadGivenBestValue(final double[][] samplevalues, final int sampleIndex,
+                                                final int readIndex, final double cap_difference,
+                                                final double best_value){
+        final double worstvalue = best_value + cap_difference;
+        final int alleleCount = alleles.numberOfAlleles();
+        for (int a = 0; a < alleleCount; a++){
+            if (samplevalues[a][readIndex] < worstvalue){
+                samplevalues[a][readIndex] = worstvalue;
+            }
+        }
+    }
+
     /**
      * Returns the samples in this read-likelihood collection.
      * <p>
@@ -748,7 +787,7 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         final int[] oldToNewAlleleIndexMap = oldToNewAlleleIndexMap(newToOldAlleleMap, oldAlleleCount, newAlleles);
 
         // We calculate the marginal likelihoods.
-        final double[][][][] newLikelihoodValues = marginalLikelihoods(oldAlleleCount, newAlleleCount,oldToNewAlleleIndexMap, null,readLikelihoods_upperbound,readLikelihoods_exact,moreRecompute, readPT, redoSquares);
+        final double[][][][] newLikelihoodValues = marginalLikelihoods(oldAlleleCount, newAlleleCount,oldToNewAlleleIndexMap, null,readLikelihoods_upperbound,readLikelihoods_exact, moreRecompute, readPT, redoSquares);
 
         final int sampleCount = samples.numberOfSamples();
 
@@ -886,7 +925,7 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         final int[][] readsToKeep = overlappingReadIndicesBySampleIndex(overlap);
         // We calculate the marginal likelihoods.
 
-        final double[][][][] newLikelihoodValues = marginalLikelihoods(oldAlleleCount, newAlleleCount,oldToNewAlleleIndexMap,readsToKeep,readLikelihoods_upperbound,readLikelihoods_exact,moreRecompute, readPT, redoSquares);
+        final double[][][][] newLikelihoodValues = marginalLikelihoods(oldAlleleCount, newAlleleCount,oldToNewAlleleIndexMap,readsToKeep,readLikelihoods_upperbound,readLikelihoods_exact, moreRecompute, redoSquares);
 
         final int sampleCount = samples.numberOfSamples();
 
@@ -1013,7 +1052,7 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
     }
     // Calculate the marginal likelihoods considering the old -> new allele index mapping.
     //Prune method
-    private double[][][][] marginalLikelihoods(final int oldAlleleCount, final int newAlleleCount, final int[] oldToNewAlleleIndexMap, final int[][] readsToKeep, final ReadLikelihoods<Haplotype> readLikelihoods_upperbound,final ReadLikelihoods<Haplotype> readLikelihoods_exact, final boolean moreRecompute, int[] readPT, int [] redoSquares) {
+    private double[][][][] marginalLikelihoods(final int oldAlleleCount, final int newAlleleCount, final int[] oldToNewAlleleIndexMap, final int[][] readsToKeep, final ReadLikelihoods<Haplotype> readLikelihoods_upperbound,final ReadLikelihoods<Haplotype> readLikelihoods_exact, final boolean moreRecompute, int [] redoSquares) {
 
         final int sampleCount = samples.numberOfSamples();
         final double[][][][] result = new double[3][sampleCount][][];//[0] is lowerbound, [1] is upperbound,[3] is exact (for debug)
@@ -1033,6 +1072,8 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             //printlikelihoods();
             //System.err.print("printupperbound\n");
             //readLikelihoods_upperbound.printlikelihoods();
+
+            // added by Chenhao: where re-computation happens
             if(moreRecompute){
                 //for (int readCount=readPT[0];readCount<readPTEnd;readCount++){
                 //System.err.printf("moreRecompute r=%d\n",r);
@@ -1043,14 +1084,14 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                 Arrays.fill(worstReadIndex, 0);
                 Arrays.fill(worstBoundGap, 0);
                 //exact_only[0] = true;
-                for(int a=0; a<newAlleleCount; a++){
+                for(int a=0; a < newAlleleCount; a++){
                     for(int r = 0; r<newSampleReadCount; r++){
                         final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
                         final int bestOldAlleleIndexLO = bestHapMapLO[s][a][r];
                         final int bestOldAlleleIndexUP = bestHapMapUP[s][a][r];
-                        double boundGap = readLikelihoods_upperbound.valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex]-valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex];
+                        double boundGap = readLikelihoods_upperbound.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex]-valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex];
                         //System.err.printf("ReadLikelihoods: a=%d r =%d gap=%f\n",a,r,boundGap);
-                        if(boundGap>worstBoundGap[a]){
+                        if(boundGap > worstBoundGap[a]){
                             worstBoundGap[a] = boundGap;
                             worstReadIndex[a] = r;
                         }
@@ -1061,43 +1102,38 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
 
                 //System.err.printf("ReadLikelihoods: exact_only=%b\n", exact_only[0] );
                 do{
+                    // for Debug
+                    System.out.println("one round");
                     nextRound = true;
-                    for(int newA=0; newA<newAlleleCount;newA++){
+                    for(int newA = 0; newA < newAlleleCount; newA++){
+                        // r是每个allele对应的最糟糕的read index
                         int r = worstReadIndex[newA];
                         final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
                         final int bestOldAlleleIndexLO = bestHapMapLO[s][newA][r];
                         final int bestOldAlleleIndexUP = bestHapMapUP[s][newA][r];
-                        //System.err.printf("moreRecompute r=%d newA=%d bestLO=%d bestUP=%d\n",r,newA,bestOldAlleleIndexLO,bestOldAlleleIndexUP );
-
-                        //record recompute work load && recompute
-                        //do the haplotype corresponding to lower bound
-                        //if(!recomputeRecord[s][bestOldAlleleIndexLO][oldReadIndex]){
-                        //     //System.err.printf("ReadLikelihoods: LO: newA=%d readIndex=%d hapIndex=%d totHap=%d totRead=%d gap=%f\n",newA,oldReadIndex,bestOldAlleleIndexLO,oldAlleleCount,newSampleReadCount,readLikelihoods_upperbound.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex]-valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex]);
-                        //     valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex]
-                        //         =readLikelihoods_exact.valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex];
-                        //     readLikelihoods_upperbound.valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex]
-                        //         =readLikelihoods_exact.valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex];
-                        //     redoSquares[0]+=readsBySampleIndex[s][oldReadIndex].getLength()*alleles.getAllele(bestOldAlleleIndexLO).getBases().length;
-                        //     recomputeRecord[s][bestOldAlleleIndexLO][oldReadIndex]=true;
-                        //     readLikelihoods_upperbound.recomputeRecord[s][bestOldAlleleIndexLO][oldReadIndex]=true;
-                        //     readLikelihoods_exact.recomputeRecord[s][bestOldAlleleIndexLO][oldReadIndex]=true;
-                        //}
 
                         //do the haplotype corresponding to upperbound
                         if(!recomputeRecord[s][bestOldAlleleIndexUP][oldReadIndex]){
                             //System.err.printf("ReadLikelihoods: UP: newA=%d readIndex=%d hapIndex=%d totHap=%d totRead=%d gap=%f\n",newA,oldReadIndex,bestOldAlleleIndexUP,oldAlleleCount,newSampleReadCount,readLikelihoods_upperbound.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex]-valuesBySampleIndex[s][bestOldAlleleIndexLO][oldReadIndex]);
-                            valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex]
-                                    =readLikelihoods_exact.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex];
-                            readLikelihoods_upperbound.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex]
-                                    =readLikelihoods_exact.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex];
-                            redoSquares[0]+=readsBySampleIndex[s][oldReadIndex].getLength()*alleles.getAllele(bestOldAlleleIndexUP).getBases().length;
-                            recomputeRecord[s][bestOldAlleleIndexUP][oldReadIndex]=true;
-                            readLikelihoods_upperbound.recomputeRecord[s][bestOldAlleleIndexUP][oldReadIndex]=true;
-                            readLikelihoods_exact.recomputeRecord[s][bestOldAlleleIndexUP][oldReadIndex]=true;
-                        }
+                            // modified by Chenhao: recompute version
 
+                            int recompute_square = 0;
+                            // added by Chenhao: for Debug
+                            System.out.println("recompute happens");
+                            recomputeOneHap(s, oldReadIndex, bestOldAlleleIndexUP,
+                                    sampleMatrix(s).reads().get(oldReadIndex),
+                                    readLikelihoods_upperbound,
+                                    gapPenalties.get(s),
+                                    processedReadsList.get(s).get(oldReadIndex));
+                            //recomputeOneRead(s, oldReadIndex, sampleMatrix(s).reads().get(oldReadIndex), readLikelihoods_upperbound, gapPenalties.get(s), processedReadsList.get(s).get(oldReadIndex), alleles.numberOfAlleles());
+                            //normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[s], s, oldReadIndex);
+                            redoSquares[0] += recompute_square;
+                        }
                     }
+                    // 初始化新矩阵
                     for (int a = 0; a < newAlleleCount; a++) {
+                        // added by Chenhao: per read version
+                        // int r = readPT[0];
                         int r = worstReadIndex[a];
                         newSampleValues_lo[a][r]=Double.NEGATIVE_INFINITY;
                         newSampleValues_up[a][r]=Double.NEGATIVE_INFINITY;
@@ -1132,7 +1168,32 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                         bestHapMapUP[s][allele][r] = newbestHapMapUP;
                         //System.err.printf("moreRecompute allele=%d r=%d nextRound=%b\n",allele,r,nextRound);
                     }
+                    // added by Chenhao
+                    // readPT[0] += 1;
                 }while(!nextRound);
+                // normalize the results
+                for (int a = 0; a < newAlleleCount; a++){
+                    int r = worstReadIndex[a];
+                    final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                    normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[s], s, oldReadIndex);
+                    readLikelihoods_upperbound.normalizeLikelihoodsPerRead(cap_difference,
+                            readLikelihoods_upperbound.valuesBySampleIndex[s], s, oldReadIndex);
+                    // Debug: check values
+                    for (int oldallele = 0; oldallele < alleles.numberOfAlleles(); oldallele++){
+                        if (recomputeRecord[s][oldallele][oldReadIndex]){
+                            if (valuesBySampleIndex[s][oldallele][oldReadIndex] !=
+                                    readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]){
+                                System.out.println("LOvalue: " + valuesBySampleIndex[s][oldallele][oldReadIndex]
+                                        + " EXvalue: " + readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]);
+                            }
+                            if (readLikelihoods_upperbound.valuesBySampleIndex[s][oldallele][oldReadIndex] !=
+                                    readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]){
+                                System.out.println("UPvalue: " + readLikelihoods_upperbound.valuesBySampleIndex[s][oldallele][oldReadIndex]
+                                        + " EXvalue: " + readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]);
+                            }
+                        }
+                    }
+                }
             }
             // We initiate all likelihoods to -Inf.
             for (int a = 0; a < newAlleleCount; a++) {
@@ -1146,6 +1207,14 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             int [][] newbestHapMapUP = new int[newAlleleCount][newSampleReadCount];
             for (int r = 0; r < newSampleReadCount; r++) {
                 final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                // added by Chenhao: for normalize (option - normalize before marginal)
+                /*
+                double [] best_likelihoods = new double[3];
+                best_likelihoods[0] = Double.NEGATIVE_INFINITY;
+                best_likelihoods[1] = Double.NEGATIVE_INFINITY;
+                best_likelihoods[2] = Double.NEGATIVE_INFINITY;
+                */
+
                 for (int a = 0; a < oldAlleleCount; a++) {
                     final int newAlleleIndex = oldToNewAlleleIndexMap[a];
                     if (newAlleleIndex == -1) {
@@ -1154,19 +1223,253 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                     double likelihood = readLikelihoods_exact.valuesBySampleIndex[s][a][oldReadIndex]; //this is exact
                     if (likelihood > newSampleValues_exact[newAlleleIndex][r]) {
                         newSampleValues_exact[newAlleleIndex][r] = likelihood;
+                        // [0]: exact best
+                        /*
+                        if (likelihood > best_likelihoods[0]){
+                            best_likelihoods[0] = likelihood;
+                        }
+                        */
                     }
                     likelihood = valuesBySampleIndex[s][a][oldReadIndex]; //this is lowerbound
                     if (likelihood > newSampleValues_lo[newAlleleIndex][r]) {
                         newSampleValues_lo[newAlleleIndex][r] = likelihood;
                         newbestHapMapLO[newAlleleIndex][r] = a;
+                        // [1]: lowerbound best
+                        /*
+                        if (likelihood > best_likelihoods[1]){
+                            best_likelihoods[1] = likelihood;
+                        }
+                        */
                     }
                     likelihood = readLikelihoods_upperbound.valuesBySampleIndex[s][a][oldReadIndex]; //this is upperbound
                     if (likelihood > newSampleValues_up[newAlleleIndex][r]) {
                         newSampleValues_up[newAlleleIndex][r] = likelihood;
                         newbestHapMapUP[newAlleleIndex][r] = a;
+                        // [2]: upperbound best
+                        /*
+                        if (likelihood > best_likelihoods[2]){
+                            best_likelihoods[2] = likelihood;
+                        }
+                        */
                     }
                 }
+                // added by Chenhao: normalize here (option - normalize before marginal)
+                /*
+                normalizePerReadGivenBestValue(newSampleValues_exact, newAlleleCount, r, cap_difference, best_likelihoods[0]);
+                normalizePerReadGivenBestValue(newSampleValues_lo, newAlleleCount, r, cap_difference, best_likelihoods[1]);
+                normalizePerReadGivenBestValue(newSampleValues_up, newAlleleCount, r, cap_difference, best_likelihoods[2]);
+                */
+            }
+            bestHapMapLO[s] = newbestHapMapLO.clone();
+            bestHapMapUP[s] = newbestHapMapUP.clone();
+        }
+        return result;
+    }
 
+    // added by Chenhao
+    //Prune method: per-read version
+    private double[][][][] marginalLikelihoods(final int oldAlleleCount, final int newAlleleCount, final int[] oldToNewAlleleIndexMap, final int[][] readsToKeep, final ReadLikelihoods<Haplotype> readLikelihoods_upperbound,final ReadLikelihoods<Haplotype> readLikelihoods_exact, final boolean moreRecompute, int[] readPT, int [] redoSquares) {
+
+        final int sampleCount = samples.numberOfSamples();
+        final double[][][][] result = new double[3][sampleCount][][];//[0] is lowerbound, [1] is upperbound,[3] is exact (for debug)
+        final int readIncrease = 5;
+        redoSquares[0] = 0;
+        for (int s = 0; s < sampleCount; s++) {
+            final int sampleReadCount = readsBySampleIndex[s].length;
+            final double[][] oldSampleValues = valuesBySampleIndex[s];
+            final int[] sampleReadToKeep = readsToKeep == null || readsToKeep[s].length == sampleReadCount ? null : readsToKeep[s];
+            final int newSampleReadCount = sampleReadToKeep == null ? sampleReadCount : sampleReadToKeep.length;
+            final double[][] newSampleValues_lo = result[0][s] = new double[newAlleleCount][newSampleReadCount];
+            final double[][] newSampleValues_up = result[1][s] = new double[newAlleleCount][newSampleReadCount];
+            final double[][] newSampleValues_exact = result[2][s] = new double[newAlleleCount][newSampleReadCount];
+            //We recompute here if instructed by outer loop
+            final int readPTEnd = Math.min(newSampleReadCount, readPT[0] + readIncrease);
+            // added by Chenhao: where re-computation happens
+            if(moreRecompute){
+                for (int r = readPT[0]; r < readPTEnd; r++){
+                    for(int newA = 0; newA < newAlleleCount; newA++){
+                        // added by Chenhao: per read version
+                        // indicator for next round
+                        boolean next_round = true;
+                        do {
+                            final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                            final int bestOldAlleleIndexLO = bestHapMapLO[s][newA][r];
+                            final int bestOldAlleleIndexUP = bestHapMapUP[s][newA][r];
+                            //do the haplotype corresponding to upperbound
+                            if(!recomputeRecord[s][bestOldAlleleIndexUP][oldReadIndex]){
+                                // modified by Chenhao: recompute version
+                                int recompute_square = 0;
+                                // added by Chenhao: for Debug
+                                System.out.println("recompute happens (per-read version)");
+                                recomputeOneHap(s, oldReadIndex, bestOldAlleleIndexUP,
+                                        sampleMatrix(s).reads().get(oldReadIndex),
+                                        readLikelihoods_upperbound,
+                                        gapPenalties.get(s),
+                                        processedReadsList.get(s).get(oldReadIndex));
+                                // for now use read-allhaps version
+                                redoSquares[0] += recompute_square;
+                                // added by Chenhao: Debug: check values
+                                if (valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex] !=
+                                        readLikelihoods_exact.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex]){
+                                    System.out.println("my value: " + valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex] +
+                                            " his value: " + readLikelihoods_exact.valuesBySampleIndex[s][bestOldAlleleIndexUP][oldReadIndex]);
+                                }
+                            }
+                            // initialize the modified cells
+                            newSampleValues_lo[newA][r]=Double.NEGATIVE_INFINITY;
+                            newSampleValues_up[newA][r]=Double.NEGATIVE_INFINITY;
+                            newSampleValues_exact[newA][r]=Double.NEGATIVE_INFINITY;
+                            // check for the new best allele
+                            int newbestHapMapLO=0;
+                            int newbestHapMapUP=0;
+                            for (int a = 0; a < oldAlleleCount; a++) {
+                                final int newAlleleIndex = oldToNewAlleleIndexMap[a];
+                                if (newAlleleIndex != newA) {
+                                    continue;
+                                }
+                                double likelihood = valuesBySampleIndex[s][a][oldReadIndex]; //this is lowerbound
+                                if (likelihood > newSampleValues_lo[newAlleleIndex][r]) {
+                                    newSampleValues_lo[newAlleleIndex][r] = likelihood;
+                                    newbestHapMapLO = a;
+                                }
+                                likelihood = readLikelihoods_upperbound.valuesBySampleIndex[s][a][oldReadIndex]; //this is upperbound
+                                if (likelihood > newSampleValues_up[newAlleleIndex][r]) {
+                                    newSampleValues_up[newAlleleIndex][r] = likelihood;
+                                    newbestHapMapUP = a;
+                                }
+                            }
+                            bestHapMapLO[s][newA][r] = newbestHapMapLO;
+                            bestHapMapUP[s][newA][r] = newbestHapMapUP;
+                            // go into next round if the new best index changes
+                            next_round = (bestOldAlleleIndexLO == newbestHapMapLO) && (bestOldAlleleIndexUP == newbestHapMapUP);
+                        }while (!next_round);
+                    }
+                    // normalize the results
+                    for (int a = 0; a < newAlleleCount; a++){
+                        final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                        normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[s], s, oldReadIndex);
+                        readLikelihoods_upperbound.normalizeLikelihoodsPerRead(cap_difference,
+                                readLikelihoods_upperbound.valuesBySampleIndex[s], s, oldReadIndex);
+                        // Debug: check values
+                        for (int oldallele = 0; oldallele < alleles.numberOfAlleles(); oldallele++){
+                            if (recomputeRecord[s][oldallele][oldReadIndex]){
+                                if (valuesBySampleIndex[s][oldallele][oldReadIndex] !=
+                                        readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]){
+                                    System.out.println("LOvalue: " + valuesBySampleIndex[s][oldallele][oldReadIndex]
+                                            + " EXvalue: " + readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]);
+                                }
+                                if (readLikelihoods_upperbound.valuesBySampleIndex[s][oldallele][oldReadIndex] !=
+                                        readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]){
+                                    System.out.println("UPvalue: " + readLikelihoods_upperbound.valuesBySampleIndex[s][oldallele][oldReadIndex]
+                                            + " EXvalue: " + readLikelihoods_exact.valuesBySampleIndex[s][oldallele][oldReadIndex]);
+                                }
+                            }
+                        }
+                    }
+                }
+                // 初始化新矩阵
+                for (int a = 0; a < newAlleleCount; a++) {
+                    // added by Chenhao: per read version
+                    for (int r = readPT[0]; r < readPTEnd; r++){
+                        newSampleValues_lo[a][r]=Double.NEGATIVE_INFINITY;
+                        newSampleValues_up[a][r]=Double.NEGATIVE_INFINITY;
+                        newSampleValues_exact[a][r]=Double.NEGATIVE_INFINITY;
+                    }
+                }
+                //System.err.printf("done this round moreRecompute\n");
+                for (int r = readPT[0]; r < readPTEnd; r++){
+                    for(int allele = 0; allele<newAlleleCount; allele ++){
+                        final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                        int newbestHapMapLO=0;
+                        int newbestHapMapUP=0;
+                        //check for bestAllele
+                        for (int a = 0; a < oldAlleleCount; a++) {
+                            final int newAlleleIndex = oldToNewAlleleIndexMap[a];
+                            if (newAlleleIndex !=allele) {
+                                continue;
+                            }
+                            double likelihood = valuesBySampleIndex[s][a][oldReadIndex]; //this is lowerbound
+                            if (likelihood > newSampleValues_lo[newAlleleIndex][r]) {
+                                newSampleValues_lo[newAlleleIndex][r] = likelihood;
+                                newbestHapMapLO = a;
+                            }
+                            likelihood = readLikelihoods_upperbound.valuesBySampleIndex[s][a][oldReadIndex]; //this is upperbound
+                            if (likelihood > newSampleValues_up[newAlleleIndex][r]) {
+                                newSampleValues_up[newAlleleIndex][r] = likelihood;
+                                newbestHapMapUP = a;
+                            }
+                        }
+                        bestHapMapLO[s][allele][r] = newbestHapMapLO;
+                        bestHapMapUP[s][allele][r] = newbestHapMapUP;
+                    }
+                }
+                // update the read pointer for next round of recompute
+                readPT[0] = readPTEnd;
+            }
+            // We initiate all likelihoods to -Inf.
+            for (int a = 0; a < newAlleleCount; a++) {
+                Arrays.fill(newSampleValues_lo[a], Double.NEGATIVE_INFINITY);
+                Arrays.fill(newSampleValues_up[a], Double.NEGATIVE_INFINITY);
+                Arrays.fill(newSampleValues_exact[a], Double.NEGATIVE_INFINITY);
+            }
+            // For each old allele and read we update the new table keeping the maximum likelihood.
+            ////WE take maximum of upperbound and lowerbound now
+            int [][] newbestHapMapLO = new int[newAlleleCount][newSampleReadCount];
+            int [][] newbestHapMapUP = new int[newAlleleCount][newSampleReadCount];
+            for (int r = 0; r < newSampleReadCount; r++) {
+                // added by Chenhao: for normalize
+                /*
+                double [] best_likelihoods = new double[3];
+                best_likelihoods[0] = Double.NEGATIVE_INFINITY;
+                best_likelihoods[1] = Double.NEGATIVE_INFINITY;
+                best_likelihoods[2] = Double.NEGATIVE_INFINITY;
+                */
+
+                final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                for (int a = 0; a < oldAlleleCount; a++) {
+                    final int newAlleleIndex = oldToNewAlleleIndexMap[a];
+                    if (newAlleleIndex == -1) {
+                        continue;
+                    }
+                    double likelihood = readLikelihoods_exact.valuesBySampleIndex[s][a][oldReadIndex]; //this is exact
+                    if (likelihood > newSampleValues_exact[newAlleleIndex][r]) {
+                        newSampleValues_exact[newAlleleIndex][r] = likelihood;
+                        // [0]: exact best
+                        /*
+                        if (likelihood > best_likelihoods[0]){
+                            best_likelihoods[0] = likelihood;
+                        }
+                        */
+                    }
+                    likelihood = valuesBySampleIndex[s][a][oldReadIndex]; //this is lowerbound
+                    if (likelihood > newSampleValues_lo[newAlleleIndex][r]) {
+                        newSampleValues_lo[newAlleleIndex][r] = likelihood;
+                        newbestHapMapLO[newAlleleIndex][r] = a;
+                        // [1]: lowerbound best
+                        /*
+                        if (likelihood > best_likelihoods[1]){
+                            best_likelihoods[1] = likelihood;
+                        }
+                        */
+                    }
+                    likelihood = readLikelihoods_upperbound.valuesBySampleIndex[s][a][oldReadIndex]; //this is upperbound
+                    if (likelihood > newSampleValues_up[newAlleleIndex][r]) {
+                        newSampleValues_up[newAlleleIndex][r] = likelihood;
+                        newbestHapMapUP[newAlleleIndex][r] = a;
+                        // [2]: upperbound best
+                        /*
+                        if (likelihood > best_likelihoods[2]) {
+                            best_likelihoods[2] = likelihood;
+                        }
+                        */
+                    }
+                }
+                // added by Chenhao: normalize here
+                /*
+                normalizePerReadGivenBestValue(newSampleValues_exact, newAlleleCount, r, cap_difference, best_likelihoods[0]);
+                normalizePerReadGivenBestValue(newSampleValues_lo, newAlleleCount, r, cap_difference, best_likelihoods[1]);
+                normalizePerReadGivenBestValue(newSampleValues_up, newAlleleCount, r, cap_difference, best_likelihoods[2]);
+                */
             }
             bestHapMapLO[s] = newbestHapMapLO.clone();
             bestHapMapUP[s] = newbestHapMapUP.clone();
@@ -1216,10 +1519,12 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
     //Prune method
     // added by Chenhao: new parameter -- gapPenalties and processedreadlist
     // added by Chenhao: new parameter -- cap difference
-    public void filterPoorlyModeledReads(final double maximumErrorPerBase, ReadLikelihoods<Haplotype> result_upperbound, ReadLikelihoods<Haplotype> result_exact, List<Map<GATKRead, byte[]>> gapPenalties, List<List<GATKRead>> processedReadList, final double cap_difference) {
+    // added by Chenhao: remove the exact matrix
+    public void filterPoorlyModeledReads(final double maximumErrorPerBase, ReadLikelihoods<Haplotype> result_upperbound, final double capDifference) {
         Utils.validateArg(alleles.numberOfAlleles() > 0, "unsupported for read-likelihood collections with no alleles");
         Utils.validateArg(!Double.isNaN(maximumErrorPerBase) && maximumErrorPerBase > 0.0, "the maximum error per base must be a positive number");
-
+        // added by Chenhao
+        cap_difference = capDifference;
         new IndexRange(0, samples.numberOfSamples()).forEach(s -> {
             // added by Chenhao: Debug check if order matters
             final List<GATKRead> my_sampleReads = sampleMatrix(s).reads();
@@ -1227,18 +1532,30 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             final GATKRead[] sampleReads = readsBySampleIndex[s];
             // added by Chenhao: from the list of penalty, get the target matrix
             Map<GATKRead, byte[]> penalty = gapPenalties.get(s);
-            List<GATKRead> processedReads = processedReadList.get(s);
+            List<GATKRead> processedReads = processedReadsList.get(s);
 
             // added by Chenhao: new parameter -- penalty
             final List<Integer> removeIndices = new IndexRange(0, sampleReads.length)
-                    .filter(r -> readIsPoorlyModelled(s, r, my_sampleReads.get(r), maximumErrorPerBase, result_upperbound,result_exact, penalty, processedReads.get(r), cap_difference));
+                    .filter(r -> readIsPoorlyModelled(s, r, my_sampleReads.get(r), maximumErrorPerBase, result_upperbound, penalty, processedReads.get(r), cap_difference));
 
             removeSampleReads(s, removeIndices, alleles.numberOfAlleles());
             result_upperbound.removeSampleReads(s, removeIndices, alleles.numberOfAlleles());
-            result_exact.removeSampleReads(s, removeIndices, alleles.numberOfAlleles());
             // added by Chenhao
             System.out.println("--------------------");
             System.out.println("Removed index: " + removeIndices);
+            // added by Chenhao: check the input for two methods
+            // check the reads
+            int readCount = my_sampleReads.size();
+            // System.out.println("readBases");
+            for (int r = 0; r < readCount; r++){
+                //System.out.println(my_sampleReads.get(r).getBasesString());
+            }
+            // check the alleles
+            // System.out.println("alleleBases");
+            int alleleCount = alleles.numberOfAlleles();
+            for (int a = 0; a < alleleCount; a++){
+                //System.out.println(alleles.getAllele(a).getBaseString());
+            }
         });
     }
     //Original
@@ -1254,16 +1571,6 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         });
 
     }
-
-    //added by Haoxuan
-    long num_reads = 0;
-    long saved_by_lower = 0;
-    long delete_by_upper = 0;
-    long unknown = 0;
-    // added by Chenhao
-    long original_work = 0;
-    long filter_work = 0;
-    //added by Haoxuan
 
     //Original
     private boolean readIsPoorlyModelled(final int sampleIndex, final int readIndex, final GATKRead read, final double maxErrorRatePerBase) {
@@ -1320,7 +1627,7 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
     //Prune method
     // added by Chenhao: new parameter -- penalty and processedreads
     // added by Chenhao: new parameter -- cap difference
-    private boolean readIsPoorlyModelled(final int sampleIndex, final int readIndex, final GATKRead read, final double maxErrorRatePerBase,ReadLikelihoods<Haplotype> result_upperbound, ReadLikelihoods<Haplotype> result_exact, final Map<GATKRead, byte[]> penalty, final GATKRead processedRead, final double cap_difference) {
+    private boolean readIsPoorlyModelled(final int sampleIndex, final int readIndex, final GATKRead read, final double maxErrorRatePerBase,ReadLikelihoods<Haplotype> result_upperbound, final Map<GATKRead, byte[]> penalty, final GATKRead processedRead, final double cap_difference) {
         final double maxErrorsForRead = Math.min(2.0, Math.ceil(read.getLength() * maxErrorRatePerBase));
         final double log10QualPerBase = -4.0;
         final double log10MaxLikelihoodForTrueAllele = maxErrorsForRead * log10QualPerBase;
@@ -1330,35 +1637,6 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         boolean rm_lowerbound=true;
         boolean rm_upperbound=true;
         boolean rm_exact = true;
-        // Chenhao: for debug
-	    /*
-	    if (true){
-		int recompute_squares = 0;
-	    	recomputeOneRead(sampleIndex, readIndex, read, result_upperbound, penalty, processedRead, alleleCount, recompute_squares);
-
-		// added by Chenhao: now need to normalize the likelihood
-		normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
-            	result_upperbound.normalizeLikelihoodsPerRead(cap_difference, result_upperbound.valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
-            	for (int a = 0; a < alleleCount; a++){
-		    // Debug: check the values
-
-		    if (valuesBySampleIndex[sampleIndex][a][readIndex] != result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]){
-                    System.out.println("og read: " + result_exact.sampleMatrix(sampleIndex).getRead(readIndex).getBasesString());
-                    System.out.println("my read: " + processedRead.getBasesString());
-		    System.out.println("tt read: " + read.getBasesString());
-                    System.out.println("og allele: " + result_exact.sampleMatrix(sampleIndex).getAllele(a));
-                    System.out.println("my allele: " + sampleMatrix(sampleIndex).alleles().get(a));
-		    System.out.println("Allele: " + a +  " my value: " + valuesBySampleIndex[sampleIndex][a][readIndex] + " his value: " + result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]);
-                    System.out.println("-----");
-                    }
-
-		if (valuesBySampleIndex[sampleIndex][a][readIndex] >= log10MaxLikelihoodForTrueAllele){
-                    rm_exact = false;
-                    }
-		}
-	    }
-  	    */
-
         for (int a = 0; a < alleleCount; a++) {
             if (sampleValues[a][readIndex] >= log10MaxLikelihoodForTrueAllele) {
                 rm_lowerbound=false;
@@ -1369,25 +1647,25 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                 rm_upperbound=false;
             }
         }
-        //added by Haoxuan
-        num_reads = num_reads + 1;
         //added by Chenhao
         for (int a = 0; a < alleleCount; a++) {
             original_work += read.getLength() * alleles.getAllele(a).getBases().length;
         }
 
         if(rm_upperbound) {
-            delete_by_upper = delete_by_upper + 1;//Haoxuan added it
             //System.err.printf("Xiao: yes remove read from utils/genotyper/ReadLikelihoods.java/readIsPoorlyModelled index=%d\n",readIndex);
             return true;
         }else if(!rm_lowerbound) {
-            saved_by_lower = saved_by_lower + 1;//Haoxuan added it
             //System.err.printf("Xiao: no remove read from utils/genotyper/ReadLikelihoods.java/readIsPoorlyModelled index=%d\n",readIndex);
             return false;
         }else{
-            unknown = unknown + 1;//Haoxuan added it
             System.err.printf("Xiao: redo from utils/genotyper/ReadLikelihoods.java/readIsPoorlyModelled index=%d\n",readIndex);
+            // added by Chenhao: calculate filter redo work
             int recompute_squares = 0;
+            for (int a = 0; a < alleleCount; a++) {
+                recompute_squares += read.getLength() * alleles.getAllele(a).getBases().length;
+            }
+            filter_work += recompute_squares;
             // added by Chenhao: the following is the orignial prune version
             //
             //for (int a = 0; a < alleleCount; a++) {
@@ -1400,17 +1678,10 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             //}
 
             // added by Chenhao: the following is the recompute version
-            recomputeOneRead(sampleIndex, readIndex, read, result_upperbound, penalty, processedRead, alleleCount, recompute_squares);
-
-            // added by Chenhao: now need to normalize the likelihood
+            recomputeOneRead(sampleIndex, readIndex, read, result_upperbound, penalty, processedRead, alleleCount);
             normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
             result_upperbound.normalizeLikelihoodsPerRead(cap_difference, result_upperbound.valuesBySampleIndex[sampleIndex], sampleIndex, readIndex);
             for (int a = 0; a < alleleCount; a++){
-                // Debug: check the values
-                if (valuesBySampleIndex[sampleIndex][a][readIndex] != result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]){
-                    System.out.println("Allele: " + a + " my value: " + valuesBySampleIndex[sampleIndex][a][readIndex] + " his value: " + result_exact.valuesBySampleIndex[sampleIndex][a][readIndex]);
-                    System.out.println("-----");
-                }
                 // Determine whether to keep the read
                 if (valuesBySampleIndex[sampleIndex][a][readIndex] >= log10MaxLikelihoodForTrueAllele){
                     rm_exact = false;
@@ -1427,14 +1698,16 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                                  ReadLikelihoods<Haplotype> result_upperbound,
                                  final Map<GATKRead, byte[]> penalty,
                                  final GATKRead processedRead,
-                                 final int alleleCount,
-                                 int recompute_squares){
+                                 final int alleleCount){
+        int recompute_squares = 0;
         final boolean isFirstHaplotype = true;
         final byte[] readBases = processedRead.getBases();
         final byte[] readQuals = processedRead.getBaseQualities();
         final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(processedRead);
         final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(processedRead);
         final byte[] overallGCP = penalty.get(processedRead);
+        // added by Chenhao: Debug
+        System.out.println("read: " + read.toString());
 
         for (int a = 0; a < alleleCount; a++){
             // get the target haplotype
@@ -1443,11 +1716,53 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             final byte[] nextAlleleBases = a == my_alleles.size() - 1 ? null : my_alleles.get(a + 1).getBases();
 
             double exact_readLikelihood = recompute_tool.computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
-            recompute_squares += read.getLength()*alleles.getAllele(a).getBases().length;
-            filter_work += recompute_squares;
+            // added by Chenhao: Debug
+            System.out.println("hap: " + a + " value: " + exact_readLikelihood);
+
             valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
             result_upperbound.valuesBySampleIndex[sampleIndex][a][readIndex] = exact_readLikelihood;
+            // added by Chenhao: 6/8
+            recomputeRecord[sampleIndex][a][readIndex] = true;
+            result_upperbound.recomputeRecord[sampleIndex][a][readIndex] = true;
+            // added by Chenhao: redo workload
+            recompute_squares += read.getLength()*alleles.getAllele(a).getBases().length;
         }
+        redo_work += recompute_squares;
+    }
+
+    // added by Chenhao: recompute function (one read against one haplotype)
+    public void recomputeOneHap(final int sampleIndex, final int readIndex, final int alleleIndex,
+                                final GATKRead read,
+                                ReadLikelihoods<Haplotype> result_upperbound,
+                                final Map<GATKRead, byte[]> penalty,
+                                final GATKRead processedRead){
+        // added by Chenhao: Debug
+        System.out.println("read: " + read.toString());
+
+        int recompute_squares = 0;
+        final boolean isFirstHaplotype = true;
+        // sanity check
+        final byte[] readBases = processedRead.getBases();
+        final byte[] readQuals = processedRead.getBaseQualities();
+        final byte[] readInsQuals = ReadUtils.getBaseInsertionQualities(processedRead);
+        final byte[] readDelQuals = ReadUtils.getBaseDeletionQualities(processedRead);
+        final byte[] overallGCP = penalty.get(processedRead);
+
+        final Allele allele = result_upperbound.sampleMatrix(sampleIndex).alleles().get(alleleIndex);
+        final List<Haplotype> my_alleles = result_upperbound.sampleMatrix(sampleIndex).alleles();
+        final byte[] nextAlleleBases = alleleIndex == my_alleles.size() - 1 ? null : my_alleles.get(alleleIndex + 1).getBases();
+
+        double exact_readLikelihood = recompute_tool.computeOneReadLikelihoodGivenHaplotypeLog10(allele.getBases(), readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
+        // added by Chenhao: Debug
+        System.out.println("hap: " + alleleIndex + " value: " + exact_readLikelihood);
+
+        valuesBySampleIndex[sampleIndex][alleleIndex][readIndex] = exact_readLikelihood;
+        result_upperbound.valuesBySampleIndex[sampleIndex][alleleIndex][readIndex] = exact_readLikelihood;
+        recomputeRecord[sampleIndex][alleleIndex][readIndex] = true;
+        result_upperbound.recomputeRecord[sampleIndex][alleleIndex][readIndex] = true;
+        // added by Chenhao: redo workload
+        recompute_squares += read.getLength() * alleles.getAllele(alleleIndex).getBases().length;
+        redo_work += recompute_squares;
     }
 
 
@@ -1949,6 +2264,13 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             }
         }
         return readIndexBySampleIndex[sampleIndex];
+    }
+
+    // added by Chenhao: see the redo work
+    public void get_statics(){
+        System.out.println("origin work: " + original_work);
+        System.out.println("filter work: " + filter_work);
+        System.out.println("redo_square: " + redo_work);
     }
 
 
