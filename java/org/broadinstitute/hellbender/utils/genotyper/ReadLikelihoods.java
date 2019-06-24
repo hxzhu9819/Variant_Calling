@@ -1383,13 +1383,13 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             // added by Chenhao: where re-computation happens
             if(moreRecompute){
                 for (int r = readPT[0]; r < readPTEnd; r++){
+                    final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
                     boolean next_round = true;
                     do {
+                        // indicator for next round
+                        next_round = true;
                         for(int newA = 0; newA < newAlleleCount; newA++){
                             // added by Chenhao: per read version
-                            // indicator for next round
-                            next_round = true;
-                            final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
                             final int bestOldAlleleIndexLO = bestHapMapLO[s][newA][r];
                             final int bestOldAlleleIndexUP = bestHapMapUP[s][newA][r];
                             final int capIndex = readLikelihoods_upperbound.getBestIndex(s, oldReadIndex, false, false);
@@ -1455,7 +1455,6 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                     }while (!next_round);
                     // normalize the results
                     for (int a = 0; a < newAlleleCount; a++){
-                        final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
                         normalizeLikelihoodsPerRead(cap_difference, valuesBySampleIndex[s], s, oldReadIndex);
                         readLikelihoods_upperbound.normalizeLikelihoodsPerRead(cap_difference,
                                 readLikelihoods_upperbound.valuesBySampleIndex[s], s, oldReadIndex);
