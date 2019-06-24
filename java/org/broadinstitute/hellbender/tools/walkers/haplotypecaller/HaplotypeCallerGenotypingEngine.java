@@ -270,7 +270,6 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
             }
 
             final Map<Allele, List<Haplotype>> alleleMapper = createAlleleMapper(mergedVC, loc, haplotypes, activeAllelesToGenotype);
-            // 这里的alleleMapper是一个Allele和Hap的映射
             if( configuration.debug && logger != null ) {
                 logger.info("Genotyping event at " + loc + " with alleles = " + mergedVC.getAlleles());
             }
@@ -288,14 +287,8 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
             VariantContext call;
             List<ReadLikelihoods<Allele>> readAlleleLikelihoods;
             int redolocus=0;
-            // 循环条件 moreRecompute中有一个是true
             do{
                 int [] redoSquares = new int[1];
-
-                // 对readlikelihood的结果进行提取
-                // 这一步是多个步骤的混合
-                //
-                // 先搞懂moreRecompute怎么用的
                 readAlleleLikelihoods = readLikelihoods.get(0).marginalize(haplotypes, readLikelihoods.get(1), readLikelihoods.get(2), alleleMapper, new SimpleInterval(mergedVC).expandWithinContig(ALLELE_EXTENSION, header.getSequenceDictionary()),moreRecompute[0]||moreRecompute[1],readPT,redoSquares);//[0] lowerbound [1] upperbound [2] exact
                 //System.err.printf("Xiao: /walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java/assignGenotypeLikelihoods after marginalization\n");
 

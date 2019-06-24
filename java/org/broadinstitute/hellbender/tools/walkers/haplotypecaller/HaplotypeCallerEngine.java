@@ -582,12 +582,25 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         final List<Haplotype> haplotypes = assemblyResult.getHaplotypeList();
         final Map<String,List<GATKRead>> reads = splitReadsBySample(regionForGenotyping.getReads());
 
-        // added by Chenhao
-        for (String key : reads.keySet()){
-            System.out.println("#number: " + reads.get(key).size());
-        }
-        // added by Chenhao: debug
+        // added by Chenhao: debug -- print out the head for each region
         System.out.println(region.toString());
+        // added by Chenhao: for Haoxuan's test -- input for pairHMM
+        for (String key : reads.keySet()){
+            List<GATKRead> readList = reads.get(key);
+            System.out.println("#read: " + readList.size());
+            for (int r = 0; r < readList.size(); r++){
+                GATKRead read = readList.get(r);
+                System.out.println("Base: " + read.getBasesString());
+                System.out.println("Quality: " + read.getBaseQualities());
+                System.out.println("length: " + read.getLength());
+            }
+        }
+        System.out.println("#haplotype: " + haplotypes.size());
+        for (int h = 0; h < haplotypes.size(); h++){
+            Haplotype hap = haplotypes.get(h);
+            System.out.println("HapBase: " + hap.getBaseString());
+            System.out.println("length: " + hap.length());
+        }
 
         // 第三步
         // Calculate the likelihoods: CPU intensive part.
@@ -628,6 +641,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
 
         // results are prepared------------------
         // added by Chenhao: print statics
+        // -- the workload (redo work for filter and whole region compared with original workload)
         readLikelihoods.get(0).get_statics();
 
         if ( haplotypeBAMWriter.isPresent() ) {

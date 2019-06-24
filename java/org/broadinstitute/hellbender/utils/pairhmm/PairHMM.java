@@ -349,7 +349,7 @@ public abstract class PairHMM implements Closeable{
         System.out.println(maxHaplotypeLength + " " + maxReadLength);
     }
 
-    // added by Chenhao: similar to the function above, but only calculate one Read-Hap likelihood
+    // added by Chenhao: only calculate the likelihood for one Read against one Haplotype
     public double computeOneReadLikelihoodGivenHaplotypeLog10( final byte[] haplotypeBases,
                                                                final byte[] readBases,
                                                                final byte[] readQuals,
