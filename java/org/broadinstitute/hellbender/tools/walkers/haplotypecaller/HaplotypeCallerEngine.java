@@ -1,5 +1,5 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
-
+import java.util.Queue;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
@@ -44,10 +44,13 @@ import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 import org.broadinstitute.hellbender.utils.variant.GATKVariantContextUtils;
 import org.broadinstitute.hellbender.utils.variant.HomoSapiensConstants;
 import org.broadinstitute.hellbender.utils.variant.writers.GVCFWriter;
+import org.spark_project.jetty.util.ArrayQueue;
+import org.spark_project.jetty.util.BlockingArrayQueue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.Collectors;
 
 /**
@@ -141,14 +144,19 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
 
     // added by Chenhao:
     // the following parameters serve as input for different steps
-    public List<List<Integer>> log2InitialValues = new ArrayList<>();
-    public List<List<Float>> realInitialValues = new ArrayList<>();
-    public List<List<VariantContext>> activeFailedResults = new ArrayList<>();
-    public List<List<VariantContext>> outputResults = new ArrayList<>();
-    public List<Map<String,List<GATKRead>>> readsPairhmmInput = new ArrayList<>();
-    public List<List<Haplotype>> haplotypeInput = new ArrayList<>();
-    public List<AssemblyResultSet> assemblyResultInput = new ArrayList<>();
-    public List<AssemblyResultSet> untrimmedAssemblyInput = new ArrayList<>();
+
+    // output from step one:
+    public Queue<List<VariantContext>> activeFailedResults = new LinkedList<>();
+    // input for step three:
+    public Queue<List<Integer>> log2InitialValues = new LinkedList<>();
+    public Queue<List<Float>> realInitialValues = new LinkedList<>();
+    public Queue<AssemblyResultSet> assemblyResultInput = new LinkedList<>();
+    public Queue<Map<String,List<GATKRead>>> readsPairhmmInput = new LinkedList<>();
+    // input for step four:
+    public Queue<List<ReadLikelihoods<Haplotype>>> readLikelihoodsResults = new LinkedList<>();
+    public Queue<List<VariantContext>> outputResults = new LinkedList<>();
+    public Queue<AssemblyResultSet> untrimmedAssemblyInput = new LinkedList<>();
+    public Queue<AssemblyResultSet> assemblyStepFourInput = new LinkedList<>();
 
     /**
      * Create and initialize a new HaplotypeCallerEngine given a collection of HaplotypeCaller arguments, a reads header,
@@ -767,10 +775,6 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
             // no reads remain after filtering so nothing else to do!
             return referenceModelForNoVariation(region, false, VCpriors);
         }
-
-        // evaluate each sample's reads against all haplotypes
-        final List<Haplotype> haplotypes = assemblyResult.getHaplotypeList();
-        final Map<String,List<GATKRead>> reads = splitReadsBySample(regionForGenotyping.getReads());
         return null;
     }
 
@@ -805,7 +809,6 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
 
         // added by Chenhao: debug -- print out the head for each region
         System.out.println(region.toString());
-        haplotypeInput.add(haplotypes);
         assemblyResultInput.add(assemblyResult);
         untrimmedAssemblyInput.add(untrimmedAssemblyResult);
         readsPairhmmInput.add(reads);
@@ -820,13 +823,14 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         realInitialValues.add(LoInitial);
     }
 
-    public List<ReadLikelihoods<Haplotype>> callRegionStepThree(final AssemblyResultSet assemblyResult, final Map<String,List<GATKRead>> reads){
+    public void callRegionStepThree(final AssemblyResultSet assemblyResult, final Map<String,List<GATKRead>> reads){
+        assemblyStepFourInput.add(assemblyResult);
         // 第三步
         // Calculate the likelihoods: CPU intensive part.
         final List<ReadLikelihoods<Haplotype>> readLikelihoods =
                 likelihoodCalculationEngine.computeReadLikelihoods(assemblyResult, samplesList, reads);
 
-        return readLikelihoods;
+        readLikelihoodsResults.add(readLikelihoods);
     }
 
     public List<VariantContext> callRegionStepFour(List<ReadLikelihoods<Haplotype>> readLikelihoods,

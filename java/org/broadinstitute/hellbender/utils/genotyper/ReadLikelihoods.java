@@ -1389,8 +1389,8 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
                         // indicator for next round
                         next_round = true;
                         // Debug
-                        System.out.println("readPT: " + readPT[0] + " read: " + r);
-                        System.out.println(sampleReadCount);
+                        //System.out.println("readPT: " + readPT[0] + " read: " + r);
+                        //System.out.println(sampleReadCount);
                         for(int newA = 0; newA < newAlleleCount; newA++){
                             // added by Chenhao: per read version
                             final int bestOldAlleleIndexLO = bestHapMapLO[s][newA][r];

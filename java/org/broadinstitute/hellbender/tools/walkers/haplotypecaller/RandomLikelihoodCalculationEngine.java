@@ -23,6 +23,12 @@ public final class RandomLikelihoodCalculationEngine implements ReadLikelihoodCa
     public void printInitialValues(final byte[] haplotypeBases){
         return;
     }
+
+    // added by Chenhao: just for pass compile
+    public int getInitialUpper(final byte[] haplotypeBases){ return 0; }
+
+    // added by Chenhao: just for pass compile
+    public float getInitialLower(final byte[] haplotypeBases){ return 0; }
                                                              
     //@Override
     //public ReadLikelihoods<Haplotype> computeReadLikelihoods(final AssemblyResultSet assemblyResultSet,

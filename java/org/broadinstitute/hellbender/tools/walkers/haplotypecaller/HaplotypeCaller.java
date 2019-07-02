@@ -1,6 +1,7 @@
 package org.broadinstitute.hellbender.tools.walkers.haplotypecaller;
 
 import htsjdk.samtools.SAMSequenceDictionary;
+import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
 import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.ArgumentCollection;
@@ -237,7 +238,19 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
 
     @Override
     public void apply(final AssemblyRegion region, final ReferenceContext referenceContext, final FeatureContext featureContext ) {
-        hcEngine.callRegion(region, featureContext).forEach(vcfWriter::add);
+        // hcEngine.callRegion(region, featureContext).forEach(vcfWriter::add);
+
+        // added by Chenhao: multi-version
+        List<VariantContext> out = hcEngine.callRegionStepOne(region, featureContext);
+        if (out != null){
+            out.forEach(vcfWriter::add);
+        }
+        else {
+            hcEngine.callRegionStepTwo(region, featureContext);
+            hcEngine.callRegionStepThree(hcEngine.assemblyResultInput.poll(), hcEngine.readsPairhmmInput.poll());
+            hcEngine.callRegionStepFour(hcEngine.readLikelihoodsResults.poll(), hcEngine.assemblyStepFourInput.poll(),
+                    featureContext, hcEngine.untrimmedAssemblyInput.poll(), region).forEach(vcfWriter::add);
+        }
     }
 
     @Override
