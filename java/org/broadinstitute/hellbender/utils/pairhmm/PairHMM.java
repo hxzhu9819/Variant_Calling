@@ -425,6 +425,9 @@ public abstract class PairHMM implements Closeable{
                                                                                          final int hapStartIndex,
                                                                                          final boolean recacheReadValues,
                                                                                          final int nextHapStartIndex);
+    public abstract float getExactInitial(final byte[] haplotypeBases);
+    public abstract int getUpperInitial(final byte[] haplotypeBases);
+    public abstract float getLowerInitial(final byte[] haplotypeBases);
 
     /**
      * Compute the first position at which two haplotypes differ

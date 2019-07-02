@@ -1383,11 +1383,14 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             // added by Chenhao: where re-computation happens
             if(moreRecompute){
                 for (int r = readPT[0]; r < readPTEnd; r++){
-                    boolean next_round = true;
                     final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                    boolean next_round = true;
                     do {
                         // indicator for next round
                         next_round = true;
+                        // Debug
+                        System.out.println("readPT: " + readPT[0] + " read: " + r);
+                        System.out.println(sampleReadCount);
                         for(int newA = 0; newA < newAlleleCount; newA++){
                             // added by Chenhao: per read version
                             final int bestOldAlleleIndexLO = bestHapMapLO[s][newA][r];

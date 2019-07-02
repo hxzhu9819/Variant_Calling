@@ -44,6 +44,16 @@ public interface ReadLikelihoodCalculationEngine extends AutoCloseable {
 
     public List<ReadLikelihoods<Haplotype>> computeReadLikelihoods(AssemblyResultSet assemblyResultSet, SampleList samples,
                                                              Map<String, List<GATKRead>> perSampleReadList);
+
+    // added by Chenhao: get initial values (implemented in PairHMMLikelihoodCalculationEngine)
+    public void printInitialValues(final byte[] haplotypeBases);
+
+    // added by Chenhao: get upper initial value
+    public int getInitialUpper(final byte[] haplotypeBases);
+
+    // added by Chenhao: get lower initial value
+    public float getInitialLower(final byte[] haplotypeBases);
+
     /**
      * This method must be called when the client is done with likelihood calculations.
      * It closes any open resources.

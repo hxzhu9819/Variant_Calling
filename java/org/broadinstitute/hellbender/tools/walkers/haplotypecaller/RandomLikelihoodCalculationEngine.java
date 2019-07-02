@@ -18,6 +18,11 @@ public final class RandomLikelihoodCalculationEngine implements ReadLikelihoodCa
                                                              Map<String, List<GATKRead>> perSampleReadList){
             return null;
     }
+
+    // added by Chenhao: just for pass compile
+    public void printInitialValues(final byte[] haplotypeBases){
+        return;
+    }
                                                              
     //@Override
     //public ReadLikelihoods<Haplotype> computeReadLikelihoods(final AssemblyResultSet assemblyResultSet,

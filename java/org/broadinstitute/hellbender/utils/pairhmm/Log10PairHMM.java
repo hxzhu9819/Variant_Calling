@@ -210,7 +210,18 @@ public final class Log10PairHMM extends N2MemoryPairHMM {
          return 0.0;
     }
 
-
+    // added by Chenhao: just to pass compile
+    public float getExactInitial(final byte[] haplotypeBases){
+        float a = 0;
+        return a;
+    }
+    public int getUpperInitial(final byte[] haplotypeBases){
+        return 0;
+    }
+    public float getLowerInitial(final byte[] haplotypeBases){
+        float a = 0;
+        return a;
+    }
 
 
 }

@@ -100,7 +100,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
     }
     
     private static int[] createInitialValueTable(){
-        int[] initialTable = new int[700];
+        int[] initialTable = new int[1000];
         initialTable[0]=0;//meaningless
         for(int i=1;i<initialTable.length;i++){
             initialTable[i] = Upper_LOG2_accurate(INITIAL_CONDITION_UP / i);
@@ -109,7 +109,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
         return initialTable;
     }
     private static float[] createOffsetTable(){
-        float [] offsetTable = new float[700];
+        float [] offsetTable = new float[1000];
         offsetTable[0]=0;//meaningless
         for(int i=1; i<offsetTable.length;i++){
             offsetTable[i] = (float)Math.log10(Math.pow(2,Fix2Float(INITIALVALUE_TABLE[i]))* i);
@@ -221,6 +221,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
     /**
      * {@inheritDoc}
      */
+    // added by Chenhao: need to modify (move the initialization out)
     @Override
     public double[] subComputeReadLikelihoodGivenHaplotypeLog10_approximate( final byte[] haplotypeBases,
                                                                final byte[] readBases,
@@ -231,12 +232,6 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
                                                                final int hapStartIndex,
                                                                final boolean recacheReadValues,
                                                                final int nextHapStartIndex) {
-        //System.err.println("transition");
-        //for(int i=0; i<TRANSITION_TABLE.length;i++){
-        //    System.err.println(Integer.toBinaryString(TRANSITION_TABLE[i]));
-        //}
-        //upperlogsumTime=0;	
-        //long start = System.nanoTime();
         if ( ! constantsAreInitialized || recacheReadValues ) {
             //initializeProbabilities(transition, insertionGOP, deletionGOP, overallGCP);
                 // note that we initialized the constants
@@ -251,117 +246,21 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
         }
 
         initializePriors(haplotypeBases, readBases, readQuals, hapStartIndex,app_prior);
-        //initializePriors(haplotypeBases, readBases, readQuals, hapStartIndex);
 	    int endI=paddedReadLength-1;
-	    
-	    ////print for debug
-        //for(int i=0; i<LOGSUM_VALUE_ENTRY.length;i++){
-        //    System.err.printf("logsum %d=%f\n",i,LOGSUM_VALUE_ENTRY[i]);
-        //}
-        ////end print for debug
-
-        
-
-        //for (int i=0; i<haplotypeBases.length;i++){
-        //    System.err.print(haplotypeBases[i]);
-        //}
-        //System.err.print("\n");
-        //System.err.printf("hap len=%d read len=%d\n",haplotypeBases.length, readBases.length);
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    //Redo from the begining of the function using table lookup in log2 domain////////////////////////////////////	
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
-            //Check prior matrix
-	    	
 	    int endJ=paddedHaplotypeLength-1;
-	    //Copy match,deletion, insertion matrix 
-	    //for (int i=0;i<paddedReadLength;i++){
-        //        app_deletionMatrix[i][0] = Upper_LOG2(0);
-        //        app_insertionMatrix[i][0] = Upper_LOG2(0);
-        //        app_matchMatrix[i][0] = Upper_LOG2(0);
-	    //	
-	    //}
-        //    for( int j = 0; j < paddedHaplotypeLength; j++ ) {
-        //        app_insertionMatrix[0][j] = Upper_LOG2(0);
-        //        app_matchMatrix[0][j] = Upper_LOG2(0);
-	    //}
 
 	    if (previousHaplotypeBases == null || previousHaplotypeBases.length != haplotypeBases.length) {
                 //final float initialValue_upper_log2 = Upper_LOG2(INITIAL_CONDITION / haplotypeBases.length);
                 final int initialValue_upper_log2 = INITIALVALUE_TABLE[haplotypeBases.length];
-                //System.err.printf("app_start initialvalue=%d float=%f hap length=%d \n",initialValue_upper_log2,Fix2Float(initialValue_upper_log2),haplotypeBases.length);
-                //System.err.print("app_end initialvalue\n");
-                
             	for( int j = 0; j < paddedHaplotypeLength; j++ ) {
                 		app_deletionMatrix[0][j] = initialValue_upper_log2;
 	    	    }
 	    }
-	    
-	    //END Copy match,deletion, insertion matrix 
-	    
-	    //Construct error matrix
-	    //END Construct error matrix
-	    
-	    
-	    //Copy transition matrix and prior matrix
-	    //float[][] app_transition=new float[transition.length][transition[0].length];
-	    //float[][] app_prior=new float[prior.length][prior[0].length];
-        
-        //System.err.print("app_end transition\n");
-        //System.err.print("app_end priors\n");
-        //for (int i=0; i<prior.length;i++){
-	    //	for(int j=0; j<prior[i].length;j++){
-	    //		app_prior[i][j]=Upper_LOG2_accurate(prior[i][j]);
-	    //	}
-	    //} 
-	    //END Copy transition matrix and prior matrix
-	    
-	    
-	    
-	    
-	    //Start log2 pairhmm matrix computation
-	    //int[][] significance_i=new int [paddedReadLength][paddedHaplotypeLength];
-	    //int[][] significance_j=new int [paddedReadLength][paddedHaplotypeLength];
-	    //for (int i = 1; i < paddedReadLength; i++) {
-        //    	for (int j = hapStartIndex+1; j < paddedHaplotypeLength; j++) {
-	    //    		significance_i[i][j]=0;//0 means no consecutive skippable diagonal line
-	    //    		//significance_j[i][j]=0;//0 means no consecutive skippable diagonal line
-	    //	}
-	    //}
-	    
-	    //////////////////////////////////////Input to verilog////////////////////////////////////
-            //PrintFix("log2initial",app_deletionMatrix[0][1],false);
-	    //PrintFix("errorthresh",log2current_error,false);
-
-        //System.err.printf("sum_bin lenggth=%d MAX_INTEGER=%d MAX_RANGE_BIN=%d \n",sum_bin.length, MAX_INTEGER,MAX_RANGE_BIN);
-	    //for(int index=0; index<sum_bin.length;index++){
-	    //	PrintFix("bin",MAX_RANGE_BIN*index,false);
-	    //}
-	    //////////////////////////////////////END Input to verilog/////////////////////////////////
-
-        //long elapsedTime = System.nanoTime()-start;
-        //System.err.printf("time spent before matrix=%d\n",elapsedTime);
-	     
-        //long start = System.nanoTime();
         int app_mm,app_im,app_dm;
         //int earlyStopRowIndex=(int)Math.floor(0.5*endI);
 	    int earlyStopRowIndex=endI;
-        //float log10Offset = OFFSET_TABLE[haplotypeBases.length];
-        //final int EARLYSTOP_THRESHOLD = Float2Fix((float)(Math.log(Math.pow(10,NOCOMPUTETH+2+log10Offset))/Math.log(2)));
-        //final int EARLYSTOP_THRESHOLD = Float2Fix((float)(Math.log(Math.pow(10,NOCOMPUTETH+log10Offset))/Math.log(2)));
-        
+
         final int EARLYSTOP_THRESHOLD = Float2Fix((float)(Math.log(Math.pow(10,NOCOMPUTETH))/Math.log(2)))+Upper_LOG2_accurate(INITIAL_CONDITION_UP);
-        
-        //int earlyStopIndexJ=16;
-        //final boolean doEarlyStop = endJ<=128 ? true : false;
-        //System.err.printf("deletion0=%f\n",Fix2Float(app_deletionMatrix[0][1]));
-        //int numBigReduce = 0;
-        //int preMaxNum = Integer.MIN_VALUE;
-        
         for (int i = 1; i <=endI ; i++) {
             //System.err.printf("endI=%d endIndex=%d i=%d\n",endI,endIndex,i);
             int maxNum= Integer.MIN_VALUE;
@@ -372,21 +271,10 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
                 tad = tad < MIN_INTEGER ? MIN_INTEGER : tad;
                 tai = tai < MIN_INTEGER ? MIN_INTEGER : tai;
                 tb = tb < MIN_INTEGER ? MIN_INTEGER : tb;
-                //System.err.printf("i=%d j=%d\n",i,j);
-                //System.err.print(" tai:"+Integer.toHexString(tai));
-                //System.err.print(" tad:"+Integer.toHexString(tad));
-                //System.err.print(" tb:"+Integer.toHexString(tb));
-                //int ta = Upper_LOGSUM(tad,tai);
-                //System.err.print(" ta:"+Integer.toHexString(ta));
                 app_matchMatrix[i][j]=Upper_LOGSUM(Upper_LOGSUM(tad,
                                             tai),
                                             tb);
-                 
-                //System.err.print(" match:"+Integer.toHexString(app_matchMatrix[i][j]));
-                //System.err.print(" anothermatch:"+Integer.toHexString(Upper_LOGSUM(Upper_LOGSUM(tad,
-                //                            tai),
-                //                            tb)));
-                //System.err.print("\n");
+
                 int i0 = app_matchMatrix[i-1][j]+app_transition[i][matchToInsertion];
                 int i1 = app_insertionMatrix[i - 1][j] +app_transition[i][insertionToInsertion];
                 i0 = i0 < MIN_INTEGER ? MIN_INTEGER : i0;
@@ -401,19 +289,15 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
 	        }
             if(i%16==0){
                 for(int j=1;j<=endJ;j++){
-	                maxNum=Math.max(app_matchMatrix[i][j],maxNum);	
-	                //maxNum=Math.max(app_insertionMatrix[i][j],maxNum);	
-	                //maxNum=Math.max(app_deletionMatrix[i][j],maxNum);	
+	                maxNum=Math.max(app_matchMatrix[i][j],maxNum);
                 }
                 if(maxNum<EARLYSTOP_THRESHOLD){
                     earlyStopRowIndex = i;
-                    //System.err.printf("earlystoprow=%d maxNum=%f "+Integer.toHexString(maxNum)+"\n",i,Fix2Float(maxNum));
                     break;
                 }
             }
 	    }
-        
-        
+
         //Try to stop early and binsum
         //Seperating match,insertion and deletion is really to match to hardware implementation
         int app_finalSumProbabilities_match = MIN_INTEGER;
@@ -431,16 +315,12 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
 	        int toadd=app_matchMatrix[earlyStopRowIndex][j];
             int index= Math.max((int)Math.floor((float)toadd/MAX_RANGE_BIN)+sum_bin_match.length/2,0);
             sum_bin_match[index]=Upper_LOGSUM(sum_bin_match[index],toadd);
-            //index = index<4? index+4 : index-4;
-            //System.err.printf("j:%d M:%d "+Integer.toHexString(toadd)+" %f\n",j,index,Fix2Float(toadd));
         }
 	    //For insertion
         for (int j = 1; j < paddedHaplotypeLength; j++) {
             int toadd=app_insertionMatrix[earlyStopRowIndex][j];
             int index = Math.max((int)Math.floor((float)toadd/MAX_RANGE_BIN)+sum_bin_insertion.length/2,0);
             sum_bin_insertion[index]=Upper_LOGSUM(sum_bin_insertion[index],toadd);
-            //index = index<4? index+4 : index-4;
-            //System.err.printf("j:%d I:%d "+Integer.toHexString(toadd)+" %f\n",j,index,Fix2Float(toadd));
         }
 	    //For deletion
         if(earlyStopRowIndex!=endI){
@@ -448,7 +328,6 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
                 int toadd=app_deletionMatrix[earlyStopRowIndex][j];
                 int index = Math.max((int)Math.floor((float)toadd/MAX_RANGE_BIN)+sum_bin_deletion.length/2,0);
                 sum_bin_deletion[index]=Upper_LOGSUM(sum_bin_deletion[index],toadd);
-                //System.err.printf("j:%d D:%d "+Integer.toHexString(toadd)+" %f\n",j,index,Fix2Float(toadd));
             }
         }
 	    //For match & insertion
@@ -458,45 +337,17 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
             //System.err.printf("bins:%d M:"+Integer.toHexString(sum_bin_match[index])+" I:"+Integer.toHexString(sum_bin_insertion[index])+"\n",index);
         }
         app_finalSumProbabilities = Upper_LOGSUM(app_finalSumProbabilities_match,app_finalSumProbabilities_insertion);
-        //System.err.print("misum:"+Integer.toHexString(app_finalSumProbabilities)+"\n");
 	    //For deletion
         if(earlyStopRowIndex!=endI){
 	        for (int index=0;index<sum_bin_deletion.length;index++){
 	    	    app_finalSumProbabilities_deletion=Upper_LOGSUM(sum_bin_deletion[index],app_finalSumProbabilities_deletion);
-                //System.err.printf("bins:%d D:"+Integer.toHexString(sum_bin_deletion[index])+"\n",index);
             }
             app_finalSumProbabilities = Upper_LOGSUM(app_finalSumProbabilities_deletion,app_finalSumProbabilities);
-            //System.err.print("midsum:"+Integer.toHexString(app_finalSumProbabilities)+"\n");
         }
-        //System.err.print("matchbin:"+Integer.toHexString(app_finalSumProbabilities_match) + " insertionbin:"+Integer.toHexString(app_finalSumProbabilities_insertion)+"deletiontin"+Integer.toHexString(app_finalSumProbabilities_deletion)+"\n");
         finalSumProbabilities_upperbound=(double)((float)Math.log10((float)Math.pow(2,Fix2Float(app_finalSumProbabilities-Upper_LOG2_accurate(INITIAL_CONDITION_UP)))));
-        //finalSumProbabilities_upperbound=(double)((float)Math.log10((float)Math.pow(2,Fix2Float(app_finalSumProbabilities)))-log10Offset);
-        
-        //System.err.printf("temp=%f upperbound=%f\n",temp_upperbound, finalSumProbabilities_upperbound); 
-        
-        //System.err.printf("interResult: unskipedratio %f unskip %d tot %d result=%f \n",(float)(earlyStopRowIndex)/(endI),earlyStopRowIndex*endJ,endI*endJ,finalSumProbabilities_upperbound);
-	    
-       int nocompute_th = Float2Fix((float)(Math.log(Math.pow(10,NOCOMPUTETH))/Math.log(2)))+Upper_LOG2_accurate(INITIAL_CONDITION_UP);
-       //float reverseth = ((float)Math.log10((float)Math.pow(2,Fix2Float(nocompute_th-Upper_LOG2_accurate(INITIAL_CONDITION_UP)))));
-       //System.err.printf("NOCOMPUTE=%f reverse=%f\n",NOCOMPUTETH,(double)reverseth);
-       //System.err.printf("EARLYSTOP_THRESHOLD=%f nocompute_th=%f\n",Fix2Float(EARLYSTOP_THRESHOLD),Fix2Float(nocompute_th));
-        
 
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    //END Redo from the begining of the function using table lookup in log2 domain////////////////////////////////////	
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    
-	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    ////Accurate calcultaion of active bands from the begining of the function based on skip matrix////////////////////	
-	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+       int nocompute_th = Float2Fix((float)(Math.log(Math.pow(10,NOCOMPUTETH))/Math.log(2)))+Upper_LOG2_accurate(INITIAL_CONDITION_UP);
+
         double finalSumProbabilities_lowerbound=Double.NEGATIVE_INFINITY;
         int skip_marker_i = 0;
         int skip_marker_j = 0;
@@ -512,22 +363,15 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
 	        		max_m=app_matchMatrix[earlyStopRowIndex][j];
 	        		skip_index_lastrow=j;
 	        	}
-	            //System.err.printf("max=%f match[%d]=%f\n",Fix2Float(max_m),j,Fix2Float(app_matchMatrix[earlyStopRowIndex][j]));
-                //System.err.print(Integer.toHexString(max_m));
-                //System.err.print(" "+Integer.toHexString(app_matchMatrix[earlyStopRowIndex][j]));
-                //System.err.print("\n");
 	        }
-            //System.err.printf("skip_index_lastrow=%d\n",skip_index_lastrow);
             if(skip_index_lastrow+(endI-earlyStopRowIndex)>endJ){
                 skip_index_lastrow = endJ - (endI - earlyStopRowIndex);
-                //System.err.printf("adjusted skip_index_lastrow=%d\n",skip_index_lastrow);
             }
 	        //check if significance_min_i correspond to the skip_index_lastrow
             skip_marker_i = earlyStopRowIndex;
             skip_marker_j = skip_index_lastrow;
             if(skip_index_lastrow>0){
                 int j=skip_index_lastrow;
-                //System.err.printf("skip_index_lastrow=%d earlyStopRowIndex=%d\n",skip_index_lastrow,earlyStopRowIndex);
                 for(int i=earlyStopRowIndex;i>1;i--){
                     int tad = app_deletionMatrix[i-1][j-1]+app_transition[i][indelToMatch]+app_prior[i][j];
                     int tai = app_insertionMatrix[i-1][j-1]+app_transition[i][indelToMatch]+app_prior[i][j];
@@ -540,9 +384,6 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
                    if(ta-tb<LOG2CURRENT_ERROR){
 	                	skip_marker_i = i-1;
                         skip_marker_j = j-1;
-                        //System.err.printf("i=%d j=%d skipI=%d skipJ=%d\n",i-1,j-1,skip_marker_i,skip_marker_j);
-                        //System.err.printf("ta=%f tb=%f error=%f\n",Fix2Float(ta),Fix2Float(tb),Fix2Float(LOG2CURRENT_ERROR));
-                        //System.err.print("ta:"+Integer.toHexString(ta)+" tb:"+Integer.toHexString(tb)+"\n");
                         j--;
 	               }else{
                         break;
@@ -553,12 +394,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
                 skip_marker_j = 2;
             }
 
-	        //int skip_marker_i=significance_i[endI-1][skip_index_lastrow-1]==0 ? endI : significance_i[endI-1][skip_index_lastrow-1];
-	        //int skip_marker_j=significance_j[endI-1][skip_index_lastrow-1]==0 ? skip_index_lastrow : significance_j[endI-1][skip_index_lastrow-1];
-	        
-
-	        //System.err.printf("earlystoprow=%d skip_marker_i=%d j=%d\n",earlyStopRowIndex,skip_marker_i,skip_marker_j);
-	        if (previousHaplotypeBases == null || previousHaplotypeBases.length != haplotypeBases.length) {
+            if (previousHaplotypeBases == null || previousHaplotypeBases.length != haplotypeBases.length) {
                 final float initialValue = INITIAL_CONDITION / haplotypeBases.length;
                 // set the initial value (free deletions in the beginning) for the first row in the deletion matrix
                 for( int j = 0; j < paddedHaplotypeLength; j++ ) {
@@ -577,7 +413,6 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
 	        float unskip_count=0;
 	        float total_count=endI*endJ;
 	        int line = 0;
-	        //System.err.printf("hapStartIndex=%d\n",hapStartIndex);
 	        //Reset last row value
 	        for (int j = 1; j < paddedHaplotypeLength; j++) {
                 matchMatrix[endI][j]=0;
@@ -624,21 +459,10 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
                 //System.err.printf("match=%f insert=%f sum=%f\n",matchMatrix[endI][j],insertionMatrix[endI][j],finalSumProbabilities_approximate);
             }
 	        finalSumProbabilities_lowerbound=(double)((float)Math.log10(finalSumProbabilities_approximate) - INITIAL_CONDITION_LOG10);
-            //elapsedTime = System.nanoTime()-start;
-            //System.err.printf("time spent to reach lowerbound=%d\n",elapsedTime);
-	        
-            //System.err.printf("inaccuracy=%f skip_ratio=%.1f read_length=%d hap_length=%d approximate_result=%f total_count=%f unskip_count=%.1f upperbound=%f diff=%f\n",1.0,1.0-unskip_count/total_count,endI,endJ,finalSumProbabilities_lowerbound,total_count,unskip_count,finalSumProbabilities_upperbound,finalSumProbabilities_upperbound-finalSumProbabilities_lowerbound);
-            //System.err.printf("time spent on matrix=%d\n",elapsedTime);
-	        
         }else{
             finalSumProbabilities_lowerbound = Double.NEGATIVE_INFINITY;
             int unskip_count=0; 
             int total_count=endI*endJ;
-	        //System.err.printf("inaccuracy=%f skip_ratio=%.1f read_length=%d hap_length=%d approximate_result=%f total_count=%d unskip_count=%d upperbound=%f diff=%f\n",1.0,1.0-unskip_count/total_count,endI,endJ,finalSumProbabilities_lowerbound,total_count,unskip_count,finalSumProbabilities_upperbound,finalSumProbabilities_upperbound-finalSumProbabilities_lowerbound);
-            //System.err.printf("time spent on matrix=%d\n",elapsedTime);
-	        
-	        //return new double[]{finalSumProbabilities_lowerbound, finalSumProbabilities_upperbound};
-
         }     
         
         ////////////////////////////////Input to Verilog///////////////////////////////////////
@@ -820,7 +644,23 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
 	return 0.0;
     }
 
+    // added by Chenhao: get exact initial value
+    public float getExactInitial(final byte[] haplotypeBases){
+        float initial = INITIAL_CONDITION / haplotypeBases.length;
+        return initial;
+    }
 
+    // added by Chenhao: get upperbound initial value
+    public int getUpperInitial(final byte[] haplotypeBases){
+        int initialValue_upper_log2 = INITIALVALUE_TABLE[haplotypeBases.length];
+        return initialValue_upper_log2;
+    }
+
+    // added by Chenhao: get lowerbound initial value
+    public float getLowerInitial(final byte[] haplotypeBases){
+        float initialValue = INITIAL_CONDITION / haplotypeBases.length;
+        return initialValue;
+    }
 
 
 

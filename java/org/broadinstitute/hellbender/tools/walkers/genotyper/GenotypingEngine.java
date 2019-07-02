@@ -640,7 +640,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
                 //it's possible that the upstream deletion that spanned this site was not emitted, mooting the symbolic spanning deletion allele
                 final boolean isSpuriousSpanningDeletion = GATKVCFConstants.isSpanningDeletion(allele) && !isVcCoveredByDeletion(vc);
                 final boolean toOutput = (isPlausible || forceKeepAllele(allele) || isNonRefWhichIsLoneAltAllele) && !isSpuriousSpanningDeletion;
-                System.err.printf("Xiao:alternativeAlleleCount=%d isPlausible=%b toOutput=%b\n",alternativeAlleleCount,isPlausible,toOutput);
+                //System.err.printf("Xiao:alternativeAlleleCount=%d isPlausible=%b toOutput=%b\n",alternativeAlleleCount,isPlausible,toOutput);
                 if (toOutput) {
                     outputAlleles.add(allele);
                     mleCounts.add(afCalculationResult.getAlleleCountAtMLE(allele));

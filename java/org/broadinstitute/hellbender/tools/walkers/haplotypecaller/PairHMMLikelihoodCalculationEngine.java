@@ -243,7 +243,12 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
 
         // added by Chenhao: exact values are kept for debugging
         //TODO: remove the result_exact if bound check is bug-free
+        // added by Chenhao: for profile
+        long filter_start = System.currentTimeMillis();
         result_lowerbound.filterPoorlyModeledReads(EXPECTED_ERROR_RATE_PER_BASE, result_upperbound, log10globalReadMismappingRate, result_exact);
+        long filter_end = System.currentTimeMillis();
+        long used_millis = filter_end - filter_start;
+        System.out.println("filter_time(ms): " + used_millis);
         //For debug: after filter
         //System.err.print("Xiao:walker/haplotypecaller/PairHMMLikelihoodCalculationEngin/computeReadLikelihoods: right after filter poor reads\n");
         //result_lowerbound.printlikelihoods();
@@ -358,6 +363,24 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
     public List<GATKRead> getProcessedReads(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound){
         final List<GATKRead> processedReads = modifyReadQualities(likelihoods_lowerbound.reads());
         return processedReads;
+    }
+
+    // added by Chenhao: print the initial values
+    public void printInitialValues(final byte[] haplotypeBases){
+        float exact_initial = pairHMM.getExactInitial(haplotypeBases);
+        float lower_initial = pairHMM.getLowerInitial(haplotypeBases);
+        int upper_initial = pairHMM.getUpperInitial(haplotypeBases);
+        System.out.println("exact_initial: " + exact_initial + " lower_initial: " + lower_initial + " upper_initial: " + upper_initial);
+    }
+
+    // added by Chenhao: get upper initial value
+    public int getInitialUpper(final byte[] haplotypeBases){
+        return pairHMM.getUpperInitial(haplotypeBases);
+    }
+
+    // added by Chenhao: get lower initial value
+    public float getInitialLower(final byte[] haplotypeBases){
+        return pairHMM.getLowerInitial(haplotypeBases);
     }
 
 
