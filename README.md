@@ -70,3 +70,11 @@ When recompute, the algorithm mainly do the following steps:
 * **`/java/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java`**
 
   * `computeOneReadLikelihoodGivenHaplotypeLog10`: only calculate the likelihood for one Read against one Haplotype
+
+##TODO
+
+### For profile
+In the genotypeEngine, `calculateGL`, the exact part is not removed yet for debug purpose. The current time spent is about 2.6x, which is expected to be 1.8x.
+
+### For steps before output
+exact matrix is still calculated in PairHMM. Remvoe after bound check method is bug-free.
