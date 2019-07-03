@@ -18,8 +18,11 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.VariantAnnotatorEng
 import org.broadinstitute.hellbender.utils.fasta.CachingIndexedFastaSequenceFile;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
 
+import javax.swing.plaf.synth.Region;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -238,18 +241,32 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
 
     @Override
     public void apply(final AssemblyRegion region, final ReferenceContext referenceContext, final FeatureContext featureContext ) {
-        // hcEngine.callRegion(region, featureContext).forEach(vcfWriter::add);
+        hcEngine.callRegion(region, featureContext).forEach(vcfWriter::add);
+    }
 
-        // added by Chenhao: multi-version
-        List<VariantContext> out = hcEngine.callRegionStepOne(region, featureContext);
-        if (out != null){
-            out.forEach(vcfWriter::add);
-        }
-        else {
-            hcEngine.callRegionStepTwo(region, featureContext);
-            hcEngine.callRegionStepThree(hcEngine.assemblyResultInput.poll(), hcEngine.readsPairhmmInput.poll());
-            hcEngine.callRegionStepFour(hcEngine.readLikelihoodsResults.poll(), hcEngine.assemblyStepFourInput.poll(),
-                    featureContext, hcEngine.untrimmedAssemblyInput.poll(), region).forEach(vcfWriter::add);
+    // added by Chenhao: input for multi-thread method
+    int regionPtr = 0;
+
+    // added by Chenhao: the outloop for multi-thread method
+    @Override
+    public void applyAllRegion(final Iterator<AssemblyRegion> assemblyRegionIterator, ReferenceDataSource reference, FeatureManager features){
+        while (assemblyRegionIterator.hasNext()){
+            final AssemblyRegion region = assemblyRegionIterator.next();
+            final ReferenceContext referenceContext = new ReferenceContext(reference, region.getExtendedSpan());
+            final FeatureContext featureContext = new FeatureContext(features, region.getExtendedSpan());
+            // start to process
+            logger.debug("Processing assembly region at " + region.getSpan() + " isActive: " + region.isActive() + " numReads: " + region.getReads().size());
+            List<VariantContext> out = hcEngine.callRegionStepOne(region, featureContext);
+            if (out != null){
+                out.forEach(vcfWriter::add);
+            }
+            else {
+                hcEngine.callRegionStepTwo(region, featureContext);
+                hcEngine.callRegionStepThree(hcEngine.assemblyResultInput.poll(), hcEngine.readsPairhmmInput.poll());
+                hcEngine.callRegionStepFour(hcEngine.readLikelihoodsResults.poll(), hcEngine.assemblyStepFourInput.poll(),
+                        featureContext, hcEngine.untrimmedAssemblyInput.poll(), region).forEach(vcfWriter::add);
+            }
+            progressMeter.update(region.getSpan());
         }
     }
 
@@ -264,4 +281,12 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
         }
 
     }
+
+    /*
+    public class myThreadOne extends Thread {
+        public void run(){
+
+        }
+    }
+    */
 }

@@ -230,6 +230,13 @@ public final class Mutect2 extends AssemblyRegionWalker {
         m2Engine.callRegion(region, referenceContext, featureContext).forEach(vcfWriter::add);
     }
 
+    // added by Chenhao: to pass compile
+    public void applyAllRegion(final Iterator<AssemblyRegion> assemblyRegionIterator,
+                               ReferenceDataSource reference,
+                               FeatureManager features){
+        return;
+    }
+
     @Override
     public void closeTool() {
         if (vcfWriter != null) {

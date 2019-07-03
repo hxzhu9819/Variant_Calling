@@ -147,6 +147,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
 
     // output from step one:
     public Queue<List<VariantContext>> activeFailedResults = new LinkedList<>();
+    static Object ob = "aa";
     // input for step three:
     public Queue<List<Integer>> log2InitialValues = new LinkedList<>();
     public Queue<List<Float>> realInitialValues = new LinkedList<>();
@@ -809,9 +810,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
 
         // added by Chenhao: debug -- print out the head for each region
         System.out.println(region.toString());
-        assemblyResultInput.add(assemblyResult);
-        untrimmedAssemblyInput.add(untrimmedAssemblyResult);
-        readsPairhmmInput.add(reads);
+
         List<Integer> UpInitial = new ArrayList<>();
         List<Float> LoInitial = new ArrayList<>();
         for (int h = 0; h < haplotypes.size(); h++){
@@ -819,6 +818,10 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
             UpInitial.add(likelihoodCalculationEngine.getInitialUpper(hap.getBases()));
             LoInitial.add(likelihoodCalculationEngine.getInitialLower(hap.getBases()));
         }
+        // prepare inputs for next step
+        assemblyResultInput.add(assemblyResult);
+        untrimmedAssemblyInput.add(untrimmedAssemblyResult);
+        readsPairhmmInput.add(reads);
         log2InitialValues.add(UpInitial);
         realInitialValues.add(LoInitial);
     }

@@ -13,6 +13,8 @@ import org.broadinstitute.hellbender.utils.activityprofile.ActivityProfileState;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Example/toy program that shows how to implement the AssemblyRegionWalker interface.
@@ -84,6 +86,13 @@ public final class ExampleAssemblyRegionWalker extends AssemblyRegionWalker {
         if ( featureContext.hasBackingDataSource() ) {
             printOverlappingVariants(featureContext);
         }
+    }
+
+    // added by Chenhao: just to pass compile
+    public void applyAllRegion(final Iterator<AssemblyRegion> assemblyRegionIterator,
+                               ReferenceDataSource reference,
+                               FeatureManager features){
+        return;
     }
 
     private void printReferenceBases( final ReferenceContext refContext ) {

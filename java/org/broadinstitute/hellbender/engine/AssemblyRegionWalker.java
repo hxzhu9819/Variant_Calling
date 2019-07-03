@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -280,7 +281,12 @@ public abstract class AssemblyRegionWalker extends GATKTool {
      */
     private void processReadShard(MultiIntervalLocalReadShard shard, ReferenceDataSource reference, FeatureManager features ) {
         final Iterator<AssemblyRegion> assemblyRegionIter = new AssemblyRegionIterator(shard, getHeaderForReads(), reference, features, assemblyRegionEvaluator(), minAssemblyRegionSize, maxAssemblyRegionSize, assemblyRegionPadding, activeProbThreshold, maxProbPropagationDistance, includeReadsWithDeletionsInIsActivePileups());
+        // added by Chenhao: pass the iterator to the inner loop for multi-thread
+        // call applyAllRegion to handle the regions
+        applyAllRegion(assemblyRegionIter, reference, features);
 
+        // Chenhao: original version
+        /*
         // Call into the tool implementation to process each assembly region from this shard.
         while ( assemblyRegionIter.hasNext() ) {
             final AssemblyRegion assemblyRegion = assemblyRegionIter.next();
@@ -295,6 +301,7 @@ public abstract class AssemblyRegionWalker extends GATKTool {
             // For this traversal, the progress meter unit is the assembly region rather than the read shard
             progressMeter.update(assemblyRegion.getSpan());
         }
+        */
     }
 
     private void writeAssemblyRegion(final AssemblyRegion region) {
@@ -353,4 +360,6 @@ public abstract class AssemblyRegionWalker extends GATKTool {
      * @param featureContext features overlapping the full extended span of the assembly region
      */
     public abstract void apply( final AssemblyRegion region, final ReferenceContext referenceContext, final FeatureContext featureContext );
+
+    public abstract void applyAllRegion(final Iterator<AssemblyRegion> assemblyRegionIterator, ReferenceDataSource reference, FeatureManager features);
 }
