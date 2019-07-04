@@ -16,14 +16,14 @@ import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.tools.walkers.annotator.Annotation;
 import org.broadinstitute.hellbender.tools.walkers.annotator.VariantAnnotatorEngine;
 import org.broadinstitute.hellbender.utils.fasta.CachingIndexedFastaSequenceFile;
+import org.broadinstitute.hellbender.utils.genotyper.ReadLikelihoods;
+import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
+import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import javax.swing.plaf.synth.Region;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -250,6 +250,18 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
     // added by Chenhao: the outloop for multi-thread method
     @Override
     public void applyAllRegion(final Iterator<AssemblyRegion> assemblyRegionIterator, ReferenceDataSource reference, FeatureManager features){
+        // multi-thread version
+        ThreadOne thread1 = new ThreadOne(assemblyRegionIterator, reference, features);
+        ThreadTwo thread2 = new ThreadTwo(reference, features);
+        ThreadThree thread3 = new ThreadThree();
+        ThreadFour thread4 = new ThreadFour(reference, features);
+
+        thread1.start();
+        thread2.start();
+        thread3.start();
+        thread4.start();
+
+        /*
         while (assemblyRegionIterator.hasNext()){
             final AssemblyRegion region = assemblyRegionIterator.next();
             final ReferenceContext referenceContext = new ReferenceContext(reference, region.getExtendedSpan());
@@ -268,6 +280,7 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
             }
             progressMeter.update(region.getSpan());
         }
+        */
     }
 
     @Override
@@ -282,11 +295,150 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
 
     }
 
-    /*
-    public class myThreadOne extends Thread {
-        public void run(){
+    // added by Chenhao: indicators for threads termination
+    private boolean ThreadOneTerminate = false;
+    private boolean ThreadTwoTerminate = false;
+    private boolean ThreadThreeTerminate = false;
 
+    // added by Chenhao: multi-threads
+    public class ThreadOne extends Thread {
+        private Iterator<AssemblyRegion> assemblyRegionIterator;
+        private ReferenceDataSource reference;
+        private FeatureManager features;
+
+        // initialize the thread with inputs of applyAllRegion
+        public ThreadOne(final Iterator<AssemblyRegion> assemblyRegionItr, ReferenceDataSource ref, FeatureManager fea){
+            this.assemblyRegionIterator = assemblyRegionItr;
+            this.reference = ref;
+            this.features = fea;
+        }
+
+        // run the first step of callRegion
+        public void run(){
+            while (assemblyRegionIterator.hasNext()){
+                final AssemblyRegion region = assemblyRegionIterator.next();
+                final ReferenceContext referenceContext = new ReferenceContext(reference, region.getExtendedSpan());
+                final FeatureContext featureContext = new FeatureContext(features, region.getExtendedSpan());
+                // start to process
+                logger.debug("Processing assembly region at " + region.getSpan() + " isActive: " + region.isActive() + " numReads: " + region.getReads().size());
+                List<VariantContext> out = hcEngine.callRegionStepOne(region, featureContext);
+                if (out != null){
+                    synchronized (hcEngine.keyForOutput) {
+                        out.forEach(vcfWriter::add);
+                    }
+                }
+                else {
+                    synchronized (hcEngine.keyForStepTwo) {
+                        hcEngine.regionInProgress.add(region);
+                    }
+                }
+            }
+            ThreadOneTerminate = true;
         }
     }
-    */
+
+    public class ThreadTwo extends Thread {
+        private ReferenceDataSource reference;
+        private FeatureManager features;
+
+        // constructor
+        public ThreadTwo(ReferenceDataSource ref, FeatureManager fea){
+            this.reference = ref;
+            this.features = fea;
+        }
+
+        // the thread handle the second step
+        public void run(){
+            boolean loop = true;
+            // TODO: here the condition for terminate the thread
+            while(loop || !ThreadOneTerminate){
+                AssemblyRegion region = null;
+                loop = true;
+                synchronized (hcEngine.keyForStepTwo){
+                    if (hcEngine.regionInProgress.isEmpty()){
+                        loop = false;
+                    }
+                    else {
+                        region = hcEngine.regionInProgress.poll();
+                    }
+                }
+                while (loop){
+                    hcEngine.callRegionStepTwo(region, new FeatureContext(features, region.getExtendedSpan()));
+                }
+            }
+            ThreadTwoTerminate = true;
+        }
+    }
+
+    public class ThreadThree extends Thread {
+        // the thread handle the third step
+        public void run(){
+            boolean loop = true;
+            // TODO: here the condition for terminate the thread
+            while(loop || !ThreadTwoTerminate){
+                AssemblyResultSet assemblyResult = null;
+                Map<String,List<GATKRead>> reads = null;
+                // TODO: in the future, add the log2 and read initial values as input
+                List<Integer> log2InitialValues = null;
+                List<Float> realInitialValues = null;
+                loop = true;
+                synchronized (hcEngine.keyForStepThree){
+                    if (hcEngine.assemblyResultInput.isEmpty()){
+                        loop = false;
+                    }
+                    else {
+                        assemblyResult = hcEngine.assemblyResultInput.poll();
+                        reads = hcEngine.readsPairhmmInput.poll();
+                    }
+                }
+                // start the progress
+                while (loop){
+                    hcEngine.callRegionStepThree(assemblyResult, reads);
+                }
+            }
+            ThreadThreeTerminate = true;
+        }
+    }
+
+    public class ThreadFour extends Thread {
+        private ReferenceDataSource reference;
+        private FeatureManager features;
+
+        // constructor
+        public ThreadFour(ReferenceDataSource ref, FeatureManager fea){
+            this.reference = ref;
+            this.features = fea;
+        }
+
+        // the thread handle the recompute and output step
+        public void run(){
+            boolean loop = true;
+            // TODO: here the condition for terminate the thread
+            while (loop || !ThreadThreeTerminate){
+                List<ReadLikelihoods<Haplotype>> result = null;
+                AssemblyResultSet assemblyResult = null;
+                AssemblyResultSet untrimmed = null;
+                AssemblyRegion region = null;
+                loop = true;
+
+                synchronized (hcEngine.keyForStepFour){
+                    if (hcEngine.readLikelihoodsResults.isEmpty()){
+                        loop = false;
+                    }
+                    else {
+                        result = hcEngine.readLikelihoodsResults.poll();
+                        assemblyResult = hcEngine.assemblyStepFourInput.poll();
+                        region = hcEngine.regionForStepFour.poll();
+                        untrimmed = hcEngine.untrimmedAssemblyInput.poll();
+                    }
+                }
+                while (loop){
+                    List<VariantContext> out = hcEngine.callRegionStepFour(result, assemblyResult, new FeatureContext(features, region.getExtendedSpan()), untrimmed, region);
+                    synchronized (hcEngine.keyForOutput) {
+                        out.forEach(vcfWriter::add);
+                    }
+                }
+            }
+        }
+    }
 }

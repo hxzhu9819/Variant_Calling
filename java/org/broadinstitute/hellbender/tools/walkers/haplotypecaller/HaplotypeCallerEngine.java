@@ -147,17 +147,24 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
 
     // output from step one:
     public Queue<List<VariantContext>> activeFailedResults = new LinkedList<>();
-    static Object ob = "aa";
+
+    public Object keyForStepTwo = "a";
+    public Queue<AssemblyRegion> regionInProgress = new LinkedList<>();
     // input for step three:
+    public Object keyForStepThree = "b";
     public Queue<List<Integer>> log2InitialValues = new LinkedList<>();
     public Queue<List<Float>> realInitialValues = new LinkedList<>();
     public Queue<AssemblyResultSet> assemblyResultInput = new LinkedList<>();
     public Queue<Map<String,List<GATKRead>>> readsPairhmmInput = new LinkedList<>();
     // input for step four:
+    public Object keyForStepFour = "c";
     public Queue<List<ReadLikelihoods<Haplotype>>> readLikelihoodsResults = new LinkedList<>();
-    public Queue<List<VariantContext>> outputResults = new LinkedList<>();
     public Queue<AssemblyResultSet> untrimmedAssemblyInput = new LinkedList<>();
     public Queue<AssemblyResultSet> assemblyStepFourInput = new LinkedList<>();
+    public Queue<AssemblyRegion> regionForStepFour = new LinkedList<>();
+    // output for vcf writer
+    public Object keyForOutput = "d";
+    public Queue<List<VariantContext>> outputResults = new LinkedList<>();
 
     /**
      * Create and initialize a new HaplotypeCallerEngine given a collection of HaplotypeCaller arguments, a reads header,
@@ -818,22 +825,29 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
             UpInitial.add(likelihoodCalculationEngine.getInitialUpper(hap.getBases()));
             LoInitial.add(likelihoodCalculationEngine.getInitialLower(hap.getBases()));
         }
-        // prepare inputs for next step
-        assemblyResultInput.add(assemblyResult);
-        untrimmedAssemblyInput.add(untrimmedAssemblyResult);
-        readsPairhmmInput.add(reads);
-        log2InitialValues.add(UpInitial);
-        realInitialValues.add(LoInitial);
+        // prepare inputs for following steps
+        synchronized (keyForStepThree){
+            assemblyResultInput.add(assemblyResult);
+            readsPairhmmInput.add(reads);
+            log2InitialValues.add(UpInitial);
+            realInitialValues.add(LoInitial);
+        }
+        synchronized (keyForStepFour){
+            regionForStepFour.add(region);
+            untrimmedAssemblyInput.add(untrimmedAssemblyResult);
+        }
     }
 
     public void callRegionStepThree(final AssemblyResultSet assemblyResult, final Map<String,List<GATKRead>> reads){
-        assemblyStepFourInput.add(assemblyResult);
         // 第三步
         // Calculate the likelihoods: CPU intensive part.
         final List<ReadLikelihoods<Haplotype>> readLikelihoods =
                 likelihoodCalculationEngine.computeReadLikelihoods(assemblyResult, samplesList, reads);
 
-        readLikelihoodsResults.add(readLikelihoods);
+        synchronized (keyForStepFour){
+            assemblyStepFourInput.add(assemblyResult);
+            readLikelihoodsResults.add(readLikelihoods);
+        }
     }
 
     public List<VariantContext> callRegionStepFour(List<ReadLikelihoods<Haplotype>> readLikelihoods,
