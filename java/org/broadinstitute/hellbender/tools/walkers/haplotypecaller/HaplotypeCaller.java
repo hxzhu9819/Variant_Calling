@@ -20,10 +20,12 @@ import org.broadinstitute.hellbender.utils.genotyper.ReadLikelihoods;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
+import scala.xml.Atom;
 
 import javax.swing.plaf.synth.Region;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -252,9 +254,9 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
     public void applyAllRegion(final Iterator<AssemblyRegion> assemblyRegionIterator, ReferenceDataSource reference, FeatureManager features){
         // multi-thread version
         ThreadOne thread1 = new ThreadOne(assemblyRegionIterator, reference, features);
-        ThreadTwo thread2 = new ThreadTwo(reference, features);
-        ThreadThree thread3 = new ThreadThree();
-        ThreadFour thread4 = new ThreadFour(reference, features);
+        ThreadTwo thread2 = new ThreadTwo(reference, features, thread1);
+        ThreadThree thread3 = new ThreadThree(thread2);
+        ThreadFour thread4 = new ThreadFour(reference, features, thread3);
 
         thread1.start();
         thread2.start();
@@ -281,6 +283,12 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
             progressMeter.update(region.getSpan());
         }
         */
+        try{
+            thread4.join();
+        }
+        catch (Exception ex){
+            System.out.println("Exception" + ex);
+        }
     }
 
     @Override
@@ -296,9 +304,11 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
     }
 
     // added by Chenhao: indicators for threads termination
+    /*
     private boolean ThreadOneTerminate = false;
     private boolean ThreadTwoTerminate = false;
     private boolean ThreadThreeTerminate = false;
+    */
 
     // added by Chenhao: multi-threads
     public class ThreadOne extends Thread {
@@ -308,13 +318,14 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
 
         // initialize the thread with inputs of applyAllRegion
         public ThreadOne(final Iterator<AssemblyRegion> assemblyRegionItr, ReferenceDataSource ref, FeatureManager fea){
-            this.assemblyRegionIterator = assemblyRegionItr;
-            this.reference = ref;
-            this.features = fea;
+            assemblyRegionIterator = assemblyRegionItr;
+            reference = ref;
+            features = fea;
         }
 
         // run the first step of callRegion
         public void run(){
+            System.out.println("Thread1 running");
             while (assemblyRegionIterator.hasNext()){
                 final AssemblyRegion region = assemblyRegionIterator.next();
                 final ReferenceContext referenceContext = new ReferenceContext(reference, region.getExtendedSpan());
@@ -325,6 +336,7 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                 if (out != null){
                     synchronized (hcEngine.keyForOutput) {
                         out.forEach(vcfWriter::add);
+                        progressMeter.update(region.getSpan());
                     }
                 }
                 else {
@@ -333,25 +345,50 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                     }
                 }
             }
-            ThreadOneTerminate = true;
+            System.out.println("Thread1 dead");
+            // ThreadOneTerminate = true;
+
+            /*
+            while (assemblyRegionIterator.hasNext()){
+                final AssemblyRegion region = assemblyRegionIterator.next();
+                final ReferenceContext referenceContext = new ReferenceContext(reference, region.getExtendedSpan());
+                final FeatureContext featureContext = new FeatureContext(features, region.getExtendedSpan());
+                // start to process
+                logger.debug("Processing assembly region at " + region.getSpan() + " isActive: " + region.isActive() + " numReads: " + region.getReads().size());
+                List<VariantContext> out = hcEngine.callRegionStepOne(region, featureContext);
+                if (out != null){
+                    out.forEach(vcfWriter::add);
+                }
+                else {
+                    hcEngine.callRegionStepTwo(region, featureContext);
+                    hcEngine.callRegionStepThree(hcEngine.assemblyResultInput.poll(), hcEngine.readsPairhmmInput.poll());
+                    hcEngine.callRegionStepFour(hcEngine.readLikelihoodsResults.poll(), hcEngine.assemblyStepFourInput.poll(),
+                            featureContext, hcEngine.untrimmedAssemblyInput.poll(), region).forEach(vcfWriter::add);
+                }
+                progressMeter.update(region.getSpan());
+            }
+            */
         }
     }
 
     public class ThreadTwo extends Thread {
         private ReferenceDataSource reference;
         private FeatureManager features;
+        private ThreadOne threadOne;
 
         // constructor
-        public ThreadTwo(ReferenceDataSource ref, FeatureManager fea){
+        public ThreadTwo(ReferenceDataSource ref, FeatureManager fea, ThreadOne thread1){
             this.reference = ref;
             this.features = fea;
+            this.threadOne = thread1;
         }
 
         // the thread handle the second step
         public void run(){
+            System.out.println("Thread2 running");
             boolean loop = true;
             // TODO: here the condition for terminate the thread
-            while(loop || !ThreadOneTerminate){
+            while(loop || threadOne.getState() != State.TERMINATED){
                 AssemblyRegion region = null;
                 loop = true;
                 synchronized (hcEngine.keyForStepTwo){
@@ -362,20 +399,29 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                         region = hcEngine.regionInProgress.poll();
                     }
                 }
-                while (loop){
+                if (loop){
                     hcEngine.callRegionStepTwo(region, new FeatureContext(features, region.getExtendedSpan()));
                 }
             }
-            ThreadTwoTerminate = true;
+            System.out.println("Thread2 dead");
+            // ThreadTwoTerminate = true;
         }
     }
 
     public class ThreadThree extends Thread {
+        ThreadTwo threadTwo;
+
+        // Constructor
+        public ThreadThree(ThreadTwo thread2){
+            this.threadTwo = thread2;
+        }
+
         // the thread handle the third step
         public void run(){
+            System.out.println("Thread3 running");
             boolean loop = true;
             // TODO: here the condition for terminate the thread
-            while(loop || !ThreadTwoTerminate){
+            while(loop || threadTwo.getState() != State.TERMINATED){
                 AssemblyResultSet assemblyResult = null;
                 Map<String,List<GATKRead>> reads = null;
                 // TODO: in the future, add the log2 and read initial values as input
@@ -392,29 +438,33 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                     }
                 }
                 // start the progress
-                while (loop){
+                if (loop){
                     hcEngine.callRegionStepThree(assemblyResult, reads);
                 }
             }
-            ThreadThreeTerminate = true;
+            System.out.println("Thread3 dead");
+            // ThreadThreeTerminate = true;
         }
     }
 
     public class ThreadFour extends Thread {
+        ThreadThree threadThree;
         private ReferenceDataSource reference;
         private FeatureManager features;
 
         // constructor
-        public ThreadFour(ReferenceDataSource ref, FeatureManager fea){
+        public ThreadFour(ReferenceDataSource ref, FeatureManager fea, ThreadThree thread3){
             this.reference = ref;
             this.features = fea;
+            this.threadThree = thread3;
         }
 
         // the thread handle the recompute and output step
         public void run(){
+            System.out.println("Thread4 running");
             boolean loop = true;
             // TODO: here the condition for terminate the thread
-            while (loop || !ThreadThreeTerminate){
+            while (loop || threadThree.getState() != State.TERMINATED){
                 List<ReadLikelihoods<Haplotype>> result = null;
                 AssemblyResultSet assemblyResult = null;
                 AssemblyResultSet untrimmed = null;
@@ -432,13 +482,15 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                         untrimmed = hcEngine.untrimmedAssemblyInput.poll();
                     }
                 }
-                while (loop){
+                if (loop){
                     List<VariantContext> out = hcEngine.callRegionStepFour(result, assemblyResult, new FeatureContext(features, region.getExtendedSpan()), untrimmed, region);
                     synchronized (hcEngine.keyForOutput) {
                         out.forEach(vcfWriter::add);
+                        progressMeter.update(region.getSpan());
                     }
                 }
             }
+            System.out.println("Thread4 dead");
         }
     }
 }
