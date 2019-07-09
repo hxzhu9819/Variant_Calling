@@ -585,6 +585,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         // added by Chenhao: debug -- print out the head for each region
         System.out.println(region.toString());
         // added by Chenhao: for Haoxuan's test -- input for pairHMM
+        /*
         for (String key : reads.keySet()){
             List<GATKRead> readList = reads.get(key);
             System.out.println("#read: " + readList.size());
@@ -601,6 +602,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
             System.out.println("HapBase: " + hap.getBaseString());
             System.out.println("length: " + hap.length());
         }
+        */
 
         // 第三步
         // Calculate the likelihoods: CPU intensive part.
