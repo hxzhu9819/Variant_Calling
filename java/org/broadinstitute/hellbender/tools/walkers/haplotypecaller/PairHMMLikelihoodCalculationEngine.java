@@ -248,7 +248,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         result_lowerbound.filterPoorlyModeledReads(EXPECTED_ERROR_RATE_PER_BASE, result_upperbound, log10globalReadMismappingRate, result_exact);
         long filter_end = System.currentTimeMillis();
         long used_millis = filter_end - filter_start;
-        System.out.println("filter_time(ms): " + used_millis);
+        // System.out.println("filter_time(ms): " + used_millis);
         //For debug: after filter
         //System.err.print("Xiao:walker/haplotypecaller/PairHMMLikelihoodCalculationEngin/computeReadLikelihoods: right after filter poor reads\n");
         //result_lowerbound.printlikelihoods();

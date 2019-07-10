@@ -1066,6 +1066,7 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
         }
         return result;
     }
+
     // Calculate the marginal likelihoods considering the old -> new allele index mapping.
     //Prune method
     // added by Chenhao: recompute version for worst bound gap reads

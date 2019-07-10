@@ -254,12 +254,10 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
     public void applyAllRegion(final Iterator<AssemblyRegion> assemblyRegionIterator, ReferenceDataSource reference, FeatureManager features){
         // multi-thread version
         ThreadOne thread1 = new ThreadOne(assemblyRegionIterator, reference, features);
-        ThreadTwo thread2 = new ThreadTwo(reference, features, thread1);
-        ThreadThree thread3 = new ThreadThree(thread2);
+        ThreadThree thread3 = new ThreadThree(thread1);
         ThreadFour thread4 = new ThreadFour(reference, features, thread3);
 
         thread1.start();
-        thread2.start();
         thread3.start();
         thread4.start();
 
@@ -326,6 +324,7 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
         // run the first step of callRegion
         public void run(){
             System.out.println("Thread1 running");
+
             while (assemblyRegionIterator.hasNext()){
                 final AssemblyRegion region = assemblyRegionIterator.next();
                 final ReferenceContext referenceContext = new ReferenceContext(reference, region.getExtendedSpan());
@@ -340,8 +339,16 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                     }
                 }
                 else {
-                    synchronized (hcEngine.keyForStepTwo) {
-                        hcEngine.regionInProgress.add(region);
+                    synchronized (hcEngine.keyForStepThree) {
+                        while (hcEngine.assemblyResultInput.size() > 10){
+                            try{
+                                hcEngine.keyForStepThree.wait();
+                            }
+                            catch (Exception ex){
+                                System.out.println("Exception" + ex);
+                            }
+                        }
+                        hcEngine.callRegionStepTwo(region, new FeatureContext(features, region.getExtendedSpan()));
                     }
                 }
             }
@@ -368,6 +375,7 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                 progressMeter.update(region.getSpan());
             }
             */
+
         }
     }
 
@@ -409,11 +417,11 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
     }
 
     public class ThreadThree extends Thread {
-        ThreadTwo threadTwo;
+        ThreadOne threadOne;
 
         // Constructor
-        public ThreadThree(ThreadTwo thread2){
-            this.threadTwo = thread2;
+        public ThreadThree(ThreadOne thread2){
+            this.threadOne = thread2;
         }
 
         // the thread handle the third step
@@ -421,7 +429,7 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
             System.out.println("Thread3 running");
             boolean loop = true;
             // TODO: here the condition for terminate the thread
-            while(loop || threadTwo.getState() != State.TERMINATED){
+            while(loop || threadOne.getState() != State.TERMINATED){
                 AssemblyResultSet assemblyResult = null;
                 Map<String,List<GATKRead>> reads = null;
                 // TODO: in the future, add the log2 and read initial values as input
@@ -431,6 +439,7 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                 synchronized (hcEngine.keyForStepThree){
                     if (hcEngine.assemblyResultInput.isEmpty()){
                         loop = false;
+                        hcEngine.keyForStepThree.notifyAll();
                     }
                     else {
                         assemblyResult = hcEngine.assemblyResultInput.poll();

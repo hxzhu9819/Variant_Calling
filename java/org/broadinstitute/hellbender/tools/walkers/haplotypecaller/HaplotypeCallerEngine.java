@@ -146,6 +146,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
     // the following parameters serve as input for different steps
 
     // output from step one:
+    public Object keyForActive = "e";
     public Queue<List<VariantContext>> activeFailedResults = new LinkedList<>();
 
     public Object keyForStepTwo = "a";
@@ -710,78 +711,80 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
     // do the active region check
     // if the region is active, return null for next step calculation
     public List<VariantContext> callRegionStepOne(final AssemblyRegion region, final FeatureContext features){
-        if ( hcArgs.justDetermineActiveRegions ) {
-            // we're benchmarking ART and/or the active region determination code in the HC, just leave without doing any work
-            return NO_CALLS;
-        }
+        synchronized (keyForActive){
+            if ( hcArgs.justDetermineActiveRegions ) {
+                // we're benchmarking ART and/or the active region determination code in the HC, just leave without doing any work
+                return NO_CALLS;
+            }
 
-        final List<VariantContext> VCpriors = new ArrayList<>();
-        if (hcArgs.genotypeArgs.supportVariants != null) {
-            features.getValues(hcArgs.genotypeArgs.supportVariants).stream().forEach(VCpriors::add);
-        }
+            final List<VariantContext> VCpriors = new ArrayList<>();
+            if (hcArgs.genotypeArgs.supportVariants != null) {
+                features.getValues(hcArgs.genotypeArgs.supportVariants).stream().forEach(VCpriors::add);
+            }
 
-        if ( hcArgs.sampleNameToUse != null ) {
-            removeReadsFromAllSamplesExcept(hcArgs.sampleNameToUse, region);
-        }
+            if ( hcArgs.sampleNameToUse != null ) {
+                removeReadsFromAllSamplesExcept(hcArgs.sampleNameToUse, region);
+            }
 
-        if( ! region.isActive() ) {
-            // Not active so nothing to do!
-            return referenceModelForNoVariation(region, true, VCpriors);
-        }
-
-        final List<VariantContext> givenAlleles = new ArrayList<>();
-        if ( hcArgs.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES ) {
-            features.getValues(hcArgs.alleles).stream().filter(vc -> hcArgs.genotypeFilteredAlleles || vc.isNotFiltered()).forEach(givenAlleles::add);
-
-            // No alleles found in this region so nothing to do!
-            if ( givenAlleles.isEmpty() ) {
+            if( ! region.isActive() ) {
+                // Not active so nothing to do!
                 return referenceModelForNoVariation(region, true, VCpriors);
             }
-        } else if( region.size() == 0 ) {
-            // No reads here so nothing to do!
-            return referenceModelForNoVariation(region, true, VCpriors);
-        }
 
-        // run the local assembler, getting back a collection of information on how we should proceed
-        final AssemblyResultSet untrimmedAssemblyResult =  AssemblyBasedCallerUtils.assembleReads(region, givenAlleles, hcArgs, readsHeader, samplesList, logger, referenceReader, assemblyEngine, aligner);
+            final List<VariantContext> givenAlleles = new ArrayList<>();
+            if ( hcArgs.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES ) {
+                features.getValues(hcArgs.alleles).stream().filter(vc -> hcArgs.genotypeFilteredAlleles || vc.isNotFiltered()).forEach(givenAlleles::add);
 
-        final SortedSet<VariantContext> allVariationEvents = untrimmedAssemblyResult.getVariationEvents(hcArgs.maxMnpDistance);
-        // TODO - line bellow might be unnecessary : it might be that assemblyResult will always have those alleles anyway
-        // TODO - so check and remove if that is the case:
-        allVariationEvents.addAll(givenAlleles);
+                // No alleles found in this region so nothing to do!
+                if ( givenAlleles.isEmpty() ) {
+                    return referenceModelForNoVariation(region, true, VCpriors);
+                }
+            } else if( region.size() == 0 ) {
+                // No reads here so nothing to do!
+                return referenceModelForNoVariation(region, true, VCpriors);
+            }
 
-        final AssemblyRegionTrimmer.Result trimmingResult = trimmer.trim(region, allVariationEvents);
+            // run the local assembler, getting back a collection of information on how we should proceed
+            final AssemblyResultSet untrimmedAssemblyResult =  AssemblyBasedCallerUtils.assembleReads(region, givenAlleles, hcArgs, readsHeader, samplesList, logger, referenceReader, assemblyEngine, aligner);
 
-        if ( ! trimmingResult.isVariationPresent() && ! hcArgs.disableOptimizations ) {
-            return referenceModelForNoVariation(region, false, VCpriors);
-        }
+            final SortedSet<VariantContext> allVariationEvents = untrimmedAssemblyResult.getVariationEvents(hcArgs.maxMnpDistance);
+            // TODO - line bellow might be unnecessary : it might be that assemblyResult will always have those alleles anyway
+            // TODO - so check and remove if that is the case:
+            allVariationEvents.addAll(givenAlleles);
 
-        final AssemblyResultSet assemblyResult =
-                trimmingResult.needsTrimming() ? untrimmedAssemblyResult.trimTo(trimmingResult.getCallableRegion()) : untrimmedAssemblyResult;
+            final AssemblyRegionTrimmer.Result trimmingResult = trimmer.trim(region, allVariationEvents);
 
-        final AssemblyRegion regionForGenotyping = assemblyResult.getRegionForGenotyping();
+            if ( ! trimmingResult.isVariationPresent() && ! hcArgs.disableOptimizations ) {
+                return referenceModelForNoVariation(region, false, VCpriors);
+            }
 
-        // filter out reads from genotyping which fail mapping quality based criteria
-        //TODO - why don't do this before any assembly is done? Why not just once at the beginning of this method
-        //TODO - on the originalActiveRegion?
-        //TODO - if you move this up you might have to consider to change referenceModelForNoVariation
-        //TODO - that does also filter reads.
+            final AssemblyResultSet assemblyResult =
+                    trimmingResult.needsTrimming() ? untrimmedAssemblyResult.trimTo(trimmingResult.getCallableRegion()) : untrimmedAssemblyResult;
 
-        // abort early if something is out of the acceptable range
-        // TODO is this ever true at this point??? perhaps GGA. Need to check.
-        if( ! assemblyResult.isVariationPresent() && ! hcArgs.disableOptimizations ) {
-            return referenceModelForNoVariation(region, false, VCpriors);
-        }
+            final AssemblyRegion regionForGenotyping = assemblyResult.getRegionForGenotyping();
 
-        // For sure this is not true if gVCF is on.
-        if ( hcArgs.dontGenotype ) {
-            return NO_CALLS; // user requested we not proceed
-        }
+            // filter out reads from genotyping which fail mapping quality based criteria
+            //TODO - why don't do this before any assembly is done? Why not just once at the beginning of this method
+            //TODO - on the originalActiveRegion?
+            //TODO - if you move this up you might have to consider to change referenceModelForNoVariation
+            //TODO - that does also filter reads.
 
-        // TODO is this ever true at this point??? perhaps GGA. Need to check.
-        if ( regionForGenotyping.size() == 0 && ! hcArgs.disableOptimizations ) {
-            // no reads remain after filtering so nothing else to do!
-            return referenceModelForNoVariation(region, false, VCpriors);
+            // abort early if something is out of the acceptable range
+            // TODO is this ever true at this point??? perhaps GGA. Need to check.
+            if( ! assemblyResult.isVariationPresent() && ! hcArgs.disableOptimizations ) {
+                return referenceModelForNoVariation(region, false, VCpriors);
+            }
+
+            // For sure this is not true if gVCF is on.
+            if ( hcArgs.dontGenotype ) {
+                return NO_CALLS; // user requested we not proceed
+            }
+
+            // TODO is this ever true at this point??? perhaps GGA. Need to check.
+            if ( regionForGenotyping.size() == 0 && ! hcArgs.disableOptimizations ) {
+                // no reads remain after filtering so nothing else to do!
+                return referenceModelForNoVariation(region, false, VCpriors);
+            }
         }
         return null;
     }
@@ -790,12 +793,17 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         final List<VariantContext> VCpriors = new ArrayList<>();
         final List<VariantContext> givenAlleles = new ArrayList<>();
         // run the local assembler, getting back a collection of information on how we should proceed
-        final AssemblyResultSet untrimmedAssemblyResult =  AssemblyBasedCallerUtils.assembleReads(region, givenAlleles, hcArgs, readsHeader, samplesList, logger, referenceReader, assemblyEngine, aligner);
-        final SortedSet<VariantContext> allVariationEvents = untrimmedAssemblyResult.getVariationEvents(hcArgs.maxMnpDistance);
-        // TODO - line bellow might be unnecessary : it might be that assemblyResult will always have those alleles anyway
-        // TODO - so check and remove if that is the case:
-        allVariationEvents.addAll(givenAlleles);
-        final AssemblyRegionTrimmer.Result trimmingResult = trimmer.trim(region, allVariationEvents);
+        AssemblyResultSet untrimmedAssemblyResult =  null;
+        SortedSet<VariantContext> allVariationEvents = null;
+        AssemblyRegionTrimmer.Result trimmingResult = null;
+        synchronized (keyForActive){
+            untrimmedAssemblyResult =  AssemblyBasedCallerUtils.assembleReads(region, givenAlleles, hcArgs, readsHeader, samplesList, logger, referenceReader, assemblyEngine, aligner);
+            allVariationEvents = untrimmedAssemblyResult.getVariationEvents(hcArgs.maxMnpDistance);
+            // TODO - line bellow might be unnecessary : it might be that assemblyResult will always have those alleles anyway
+            // TODO - so check and remove if that is the case:
+            allVariationEvents.addAll(givenAlleles);
+            trimmingResult = trimmer.trim(region, allVariationEvents);
+        }
         final AssemblyResultSet assemblyResult =
                 trimmingResult.needsTrimming() ? untrimmedAssemblyResult.trimTo(trimmingResult.getCallableRegion()) : untrimmedAssemblyResult;
         final AssemblyRegion regionForGenotyping = assemblyResult.getRegionForGenotyping();
