@@ -62,7 +62,7 @@ public final class IndependentSampleGenotypesModel {
         return new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, genotypeLikelihoods);
     }
     //Prune Method
-    public <A extends Allele> List<GenotypingLikelihoods<A>> calculateLikelihoods(final AlleleList<A> genotypingAlleles, final GenotypingData<A> data_lowerbound,final GenotypingData<A> data_upperbound,final GenotypingData<A> data_exact) {
+    public <A extends Allele> List<GenotypingLikelihoods<A>> calculateLikelihoods(final AlleleList<A> genotypingAlleles, final GenotypingData<A> data_lowerbound,final GenotypingData<A> data_upperbound) {
         Utils.nonNull(genotypingAlleles, "the allele cannot be null");
         Utils.nonNull(data_lowerbound, "the genotyping data cannot be null");
 
@@ -73,7 +73,7 @@ public final class IndependentSampleGenotypesModel {
         final PloidyModel ploidyModel = data_lowerbound.ploidyModel();
         final List<GenotypeLikelihoods> genotypeLikelihoods_lo = new ArrayList<>(sampleCount);
         final List<GenotypeLikelihoods> genotypeLikelihoods_up = new ArrayList<>(sampleCount);
-        final List<GenotypeLikelihoods> genotypeLikelihoods_exact = new ArrayList<>(sampleCount);
+        // final List<GenotypeLikelihoods> genotypeLikelihoods_exact = new ArrayList<>(sampleCount);
         final int alleleCount = genotypingAlleles.numberOfAlleles();
 
         GenotypeLikelihoodCalculator likelihoodsCalculator_lo = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
@@ -91,25 +91,27 @@ public final class IndependentSampleGenotypesModel {
 
             final LikelihoodMatrix<A> sampleLikelihoods_lowerbound = alleleLikelihoodMatrixMapper.apply(data_lowerbound.readLikelihoods().sampleMatrix(i));
             final LikelihoodMatrix<A> sampleLikelihoods_upperbound = alleleLikelihoodMatrixMapper.apply(data_upperbound.readLikelihoods().sampleMatrix(i));
-            final LikelihoodMatrix<A> sampleLikelihoods_exact = alleleLikelihoodMatrixMapper.apply(data_exact.readLikelihoods().sampleMatrix(i));
-	        //Sanity check:
+            // final LikelihoodMatrix<A> sampleLikelihoods_exact = alleleLikelihoodMatrixMapper.apply(data_exact.readLikelihoods().sampleMatrix(i));
+	        /*
+            //Sanity check:
 	        if(sampleLikelihoods_lowerbound.numberOfReads()!=sampleLikelihoods_upperbound.numberOfReads()||sampleLikelihoods_lowerbound.numberOfReads()!=sampleLikelihoods_exact.numberOfReads() ){
 	            System.err.printf("Xiao: walkers/genotyper/IndependentSampleGenotypesModel.java/calculateLikelihoods: Readcount inconsistent\n");
 	        }
 	        if(sampleLikelihoods_lowerbound.numberOfAlleles()!=sampleLikelihoods_upperbound.numberOfAlleles()||sampleLikelihoods_lowerbound.numberOfAlleles()!=sampleLikelihoods_exact.numberOfAlleles() ){
 	            System.err.printf("Xiao: walkers/genotyper/IndependentSampleGenotypesModel.java/calculateLikelihoods: Allelescount inconsistent\n");
 	        }
+	        */
             //end Sanity check
 	        genotypeLikelihoods_lo.add(likelihoodsCalculator_lo.genotypeLikelihoods(sampleLikelihoods_lowerbound));
 	        genotypeLikelihoods_up.add(likelihoodsCalculator_up.genotypeLikelihoods(sampleLikelihoods_upperbound));
-	        genotypeLikelihoods_exact.add(likelihoodsCalculator_exact.genotypeLikelihoods(sampleLikelihoods_exact));
+	        // genotypeLikelihoods_exact.add(likelihoodsCalculator_exact.genotypeLikelihoods(sampleLikelihoods_exact));
             
             
         }
         final  List<GenotypingLikelihoods<A>> result = new ArrayList<GenotypingLikelihoods<A>>();
         result.add(new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, genotypeLikelihoods_lo));
         result.add(new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, genotypeLikelihoods_up));
-        result.add(new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, genotypeLikelihoods_exact));
+        // result.add(new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, genotypeLikelihoods_exact));
         return result;
     }
 

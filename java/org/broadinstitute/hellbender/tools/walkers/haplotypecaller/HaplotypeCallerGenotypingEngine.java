@@ -289,7 +289,7 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
             int redolocus=0;
             do{
                 int [] redoSquares = new int[1];
-                readAlleleLikelihoods = readLikelihoods.get(0).marginalize(haplotypes, readLikelihoods.get(1), readLikelihoods.get(2), alleleMapper, new SimpleInterval(mergedVC).expandWithinContig(ALLELE_EXTENSION, header.getSequenceDictionary()),moreRecompute[0]||moreRecompute[1],readPT,redoSquares);//[0] lowerbound [1] upperbound [2] exact
+                readAlleleLikelihoods = readLikelihoods.get(0).marginalize(haplotypes, readLikelihoods.get(1), alleleMapper, new SimpleInterval(mergedVC).expandWithinContig(ALLELE_EXTENSION, header.getSequenceDictionary()),moreRecompute[0]||moreRecompute[1],readPT,redoSquares);//[0] lowerbound [1] upperbound [2] exact
                 //System.err.printf("Xiao: /walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java/assignGenotypeLikelihoods after marginalization\n");
 
                 if(moreRecompute[0]){
@@ -622,14 +622,14 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
         //if this region is already recomputed, then no need to combine bounds or examine for recompute
         if(exact_only[0]){
             // 这里应该传0或者1（recompute过的lower或upper矩阵）
-            result.add(calculateGLsForThisEvent(readLikelihoods.get(2),mergedVC,noCallAlleles));
+            result.add(calculateGLsForThisEvent(readLikelihoods.get(0),mergedVC,noCallAlleles));
             return result;
         }
 
         final List<Allele> vcAlleles = mergedVC.getAlleles();
         final AlleleList<Allele> alleleList = readLikelihoods.get(0).numberOfAlleles() == vcAlleles.size() ? readLikelihoods.get(0) : new IndexedAlleleList<>(vcAlleles);
         // result是lower upper和exact的list
-        final List<GenotypingLikelihoods<Allele>> likelihoods = genotypingModel.calculateLikelihoods(alleleList,new GenotypingData<>(ploidyModel,readLikelihoods.get(0)),new GenotypingData<>(ploidyModel,readLikelihoods.get(1)),new GenotypingData<>(ploidyModel,readLikelihoods.get(2)));//[0] lowerbound [1] upperbound [2] exact
+        final List<GenotypingLikelihoods<Allele>> likelihoods = genotypingModel.calculateLikelihoods(alleleList,new GenotypingData<>(ploidyModel,readLikelihoods.get(0)),new GenotypingData<>(ploidyModel,readLikelihoods.get(1)));//[0] lowerbound [1] upperbound [2] exact
 
 
 
@@ -839,10 +839,12 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
             ////end print for debug
 
         }
+        /*
         final GenotypesContext result_exact = GenotypesContext.create(sampleCount);
         result_exact.add(new GenotypeBuilder(samples.getSample(0)).alleles(noCallAlleles).PL(likelihoods.get(2).sampleLikelihoods(s).getAsPLs()).make());
 
         result.add(result_exact);
+        */
         return result;
     }
 
