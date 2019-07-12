@@ -211,7 +211,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         // Here initialize the bound ReadLikelihoods with the pariHMM tool
         final ReadLikelihoods<Haplotype> result_lowerbound = new ReadLikelihoods<>(samples, haplotypes, perSampleReadList, pairHMM);
         final ReadLikelihoods<Haplotype> result_upperbound = new ReadLikelihoods<>(samples, haplotypes, perSampleReadList, pairHMM);
-        final ReadLikelihoods<Haplotype> result_exact = new ReadLikelihoods<>(samples, haplotypes, perSampleReadList, pairHMM);
+        // final ReadLikelihoods<Haplotype> result_exact = new ReadLikelihoods<>(samples, haplotypes, perSampleReadList, pairHMM);
         final int sampleCount = result_lowerbound.numberOfSamples();
 
         for (int i = 0; i < sampleCount; i++) {
@@ -224,7 +224,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
             // Processed reads and gapPenalties will be used in recompute part, keep it in ReadLikelihoods Class
             result_lowerbound.processedReadsList.add(modifyReadQualities(result_lowerbound.sampleMatrix(i).reads()));
             result_lowerbound.gapPenalties.add(getPenaltyMap(result_lowerbound.processedReadsList.get(i)));
-            computeReadLikelihoods(result_lowerbound.sampleMatrix(i), result_upperbound.sampleMatrix(i), result_exact.sampleMatrix(i), result_lowerbound.gapPenalties.get(i), result_lowerbound.processedReadsList.get(i));
+            computeReadLikelihoods(result_lowerbound.sampleMatrix(i), result_upperbound.sampleMatrix(i), result_lowerbound.gapPenalties.get(i), result_lowerbound.processedReadsList.get(i));
         }
 
         //For debug: after HMM
@@ -235,7 +235,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         //System.out.println("cap_dif: " + log10globalReadMismappingRate);
         result_lowerbound.normalizeLikelihoods(log10globalReadMismappingRate);
         result_upperbound.normalizeLikelihoods(log10globalReadMismappingRate);
-        result_exact.normalizeLikelihoods(log10globalReadMismappingRate);
+        // result_exact.normalizeLikelihoods(log10globalReadMismappingRate);
         //For debug: after cap diff
         //System.err.print("Xiao:walker/haplotypecaller/PairHMMLikelihoodCalculationEngin/computeReadLikelihoods: right after cap diff\n");
         //result_lowerbound.printlikelihoods();
@@ -245,7 +245,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         //TODO: remove the result_exact if bound check is bug-free
         // added by Chenhao: for profile
         long filter_start = System.currentTimeMillis();
-        result_lowerbound.filterPoorlyModeledReads(EXPECTED_ERROR_RATE_PER_BASE, result_upperbound, log10globalReadMismappingRate, result_exact);
+        result_lowerbound.filterPoorlyModeledReads(EXPECTED_ERROR_RATE_PER_BASE, result_upperbound, log10globalReadMismappingRate);
         long filter_end = System.currentTimeMillis();
         long used_millis = filter_end - filter_start;
         // System.out.println("filter_time(ms): " + used_millis);
@@ -265,7 +265,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         List<ReadLikelihoods<Haplotype>> result = new ArrayList<ReadLikelihoods<Haplotype>>();
         result.add(result_lowerbound);
         result.add(result_upperbound);
-        result.add(result_exact);
+        // result.add(result_exact);
         return result;
     }
 
@@ -338,7 +338,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
     //Prune Method
     // added by Chenhao:
     // The original function is modified: the gapPenalty and processed reads are moved to out loop
-    private void computeReadLikelihoods(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,final LikelihoodMatrix<Haplotype> likelihoods_upperbound,final LikelihoodMatrix<Haplotype> likelihoods_exact, Map<GATKRead, byte[]> gapContinuationPenalties, List<GATKRead> processedReads) {
+    private void computeReadLikelihoods(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,final LikelihoodMatrix<Haplotype> likelihoods_upperbound, Map<GATKRead, byte[]> gapContinuationPenalties, List<GATKRead> processedReads) {
         // Modify the read qualities by applying the PCR error model and capping the minimum base,insertion,deletion qualities
         // final List<GATKRead> processedReads = modifyReadQualities(likelihoods_lowerbound.reads());
 
@@ -346,7 +346,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         // final Map<GATKRead, byte[]> gapContinuationPenalties = buildGapContinuationPenalties(processedReads, constantGCP);
 
         // Run the PairHMM to calculate the log10 likelihood of each (processed) reads' arising from each haplotype
-        pairHMM.computeLog10Likelihoods(likelihoods_lowerbound,likelihoods_upperbound,likelihoods_exact, processedReads, gapContinuationPenalties);
+        pairHMM.computeLog10Likelihoods(likelihoods_lowerbound,likelihoods_upperbound, processedReads, gapContinuationPenalties);
 
         //pairHMM.close();//write out profiling time
         writeDebugLikelihoods(likelihoods_lowerbound);

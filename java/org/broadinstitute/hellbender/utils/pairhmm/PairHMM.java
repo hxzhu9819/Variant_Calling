@@ -211,7 +211,8 @@ public abstract class PairHMM implements Closeable{
      * @param gcp penalty for gap continuations base array map for processed reads.
      *
      */
-    public synchronized void computeLog10Likelihoods(final LikelihoodMatrix<Haplotype> logLikelihoods_lowerbound,final LikelihoodMatrix<Haplotype> logLikelihoods_upperbound,final LikelihoodMatrix<Haplotype> logLikelihoods_exact,
+    public synchronized void computeLog10Likelihoods(final LikelihoodMatrix<Haplotype> logLikelihoods_lowerbound,
+                                                     final LikelihoodMatrix<Haplotype> logLikelihoods_upperbound,
                                         final List<GATKRead> processedReads,
                                         final Map<GATKRead, byte[]> gcp) {
         if (processedReads.isEmpty()) {
@@ -251,7 +252,7 @@ public abstract class PairHMM implements Closeable{
                         readBases, readQuals, readInsQuals, readDelQuals, overallGCP, isFirstHaplotype, nextAlleleBases);
                 logLikelihoods_lowerbound.set(a, readIndex, lk[0]);//lowerbound
                 logLikelihoods_upperbound.set(a,readIndex,lk[1]);//upperbound
-                logLikelihoods_exact.set(a,readIndex,lk[2]);//exact
+                // logLikelihoods_exact.set(a,readIndex,lk[2]);//exact
 
                 mLogLikelihoodArray[idx++] = lk[0];
             }
@@ -324,7 +325,7 @@ public abstract class PairHMM implements Closeable{
         //System.err.printf("time to do appro=%d\n",elapsedTime);
 
         //start=System.nanoTime();
-        final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
+        // final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
         //elapsedTime = System.nanoTime()-start;
         //System.err.printf("time to do exact=%d\n",elapsedTime);
 
@@ -340,7 +341,7 @@ public abstract class PairHMM implements Closeable{
         final double[] result = new double[3];
         result[0] = result_approximate[0];
         result[1] = result_approximate[1];
-        result[2] = result_exact;
+        // result[2] = result_exact;
         return result;
     }
 
