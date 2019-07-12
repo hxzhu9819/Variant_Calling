@@ -295,7 +295,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
             // here use the hardware to compute
             //pairHMM.computeLog10Likelihoods(result_lowerbound.sampleMatrix(i), result_upperbound.sampleMatrix(i), result_lowerbound.processedReadsList.get(i), result_lowerbound.gapPenalties.get(i));
             hardware_process(result_lowerbound.sampleMatrix(i), result_upperbound.sampleMatrix(i),
-                    result_lowerbound.processedReadsList.get(i), haplotypeList);
+                    result_lowerbound.processedReadsList.get(i), haplotypeList, log2InitialValues, realInitialValues);
         }
 
         result_lowerbound.normalizeLikelihoods(log10globalReadMismappingRate);
@@ -317,8 +317,10 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
     public void hardware_process(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,
                                  final LikelihoodMatrix<Haplotype> likelihoods_upperbound,
                                  List<GATKRead> processedreads,
-                                 List<Haplotype> haplotypeList){
-
+                                 List<Haplotype> haplotypeList,
+                                 final List<Integer> log2InitialValues,
+                                 final List<Float> realInitialValues){
+        
     }
 
     /**
