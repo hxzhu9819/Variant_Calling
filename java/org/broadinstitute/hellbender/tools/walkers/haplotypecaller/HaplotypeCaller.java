@@ -444,11 +444,13 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
                     else {
                         assemblyResult = hcEngine.assemblyResultInput.poll();
                         reads = hcEngine.readsPairhmmInput.poll();
+                        log2InitialValues = hcEngine.log2InitialValues.poll();
+                        realInitialValues = hcEngine.realInitialValues.poll();
                     }
                 }
                 // start the progress
                 if (loop){
-                    hcEngine.callRegionStepThree(assemblyResult, reads);
+                    hcEngine.callRegionStepThree(assemblyResult, reads, log2InitialValues, realInitialValues);
                 }
             }
             System.out.println("Thread3 dead");

@@ -211,6 +211,19 @@ public abstract class PairHMM implements Closeable{
      * @param gcp penalty for gap continuations base array map for processed reads.
      *
      */
+    public synchronized void tool_initialize(final LikelihoodMatrix<Haplotype> logLikelihoods_lowerbound,
+                                             final List<GATKRead> processedReads){
+        if (processedReads.isEmpty()) {
+            return;
+        }
+        // (re)initialize the pairHMM only if necessary
+        final int readMaxLength = findMaxReadLength(processedReads);
+        final int haplotypeMaxLength = findMaxAlleleLength(logLikelihoods_lowerbound.alleles());
+        if (!initialized || readMaxLength > maxReadLength || haplotypeMaxLength > maxHaplotypeLength) {
+            initialize(readMaxLength, haplotypeMaxLength);
+        }
+    }
+
     public synchronized void computeLog10Likelihoods(final LikelihoodMatrix<Haplotype> logLikelihoods_lowerbound,
                                                      final LikelihoodMatrix<Haplotype> logLikelihoods_upperbound,
                                         final List<GATKRead> processedReads,

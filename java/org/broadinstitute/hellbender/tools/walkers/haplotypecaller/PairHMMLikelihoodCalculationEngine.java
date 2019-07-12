@@ -269,6 +269,58 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         return result;
     }
 
+    // added by Chenhao: hardware version compute
+    public List<ReadLikelihoods<Haplotype>> hardware_compute(final AssemblyResultSet assemblyResultSet,
+                                                             final SampleList samples,
+                                                             final Map<String, List<GATKRead>> perSampleReadList,
+                                                             final List<Integer> log2InitialValues,
+                                                             final List<Float> realInitialValues){
+        Utils.nonNull(assemblyResultSet, "assemblyResultSet is null");
+        Utils.nonNull(samples, "samples is null");
+        Utils.nonNull(perSampleReadList, "perSampleReadList is null");
+
+        final List<Haplotype> haplotypeList = assemblyResultSet.getHaplotypeList();
+        final AlleleList<Haplotype> haplotypes = new IndexedAlleleList<>(haplotypeList);
+
+        initializePairHMM(haplotypeList, perSampleReadList);
+
+        final ReadLikelihoods<Haplotype> result_lowerbound = new ReadLikelihoods<>(samples, haplotypes, perSampleReadList, pairHMM);
+        final ReadLikelihoods<Haplotype> result_upperbound = new ReadLikelihoods<>(samples, haplotypes, perSampleReadList, pairHMM);
+
+        final int sampleCount = result_lowerbound.numberOfSamples();
+
+        for (int i = 0; i < sampleCount; i++) {
+            result_lowerbound.processedReadsList.add(modifyReadQualities(result_lowerbound.sampleMatrix(i).reads()));
+            result_lowerbound.gapPenalties.add(getPenaltyMap(result_lowerbound.processedReadsList.get(i)));
+            // here use the hardware to compute
+            //pairHMM.computeLog10Likelihoods(result_lowerbound.sampleMatrix(i), result_upperbound.sampleMatrix(i), result_lowerbound.processedReadsList.get(i), result_lowerbound.gapPenalties.get(i));
+            hardware_process(result_lowerbound.sampleMatrix(i), result_upperbound.sampleMatrix(i),
+                    result_lowerbound.processedReadsList.get(i), haplotypeList);
+        }
+
+        result_lowerbound.normalizeLikelihoods(log10globalReadMismappingRate);
+        result_upperbound.normalizeLikelihoods(log10globalReadMismappingRate);
+
+        long filter_start = System.currentTimeMillis();
+        result_lowerbound.filterPoorlyModeledReads(EXPECTED_ERROR_RATE_PER_BASE, result_upperbound, log10globalReadMismappingRate);
+        long filter_end = System.currentTimeMillis();
+        long used_millis = filter_end - filter_start;
+        // System.out.println("filter_time(ms): " + used_millis);
+
+        List<ReadLikelihoods<Haplotype>> result = new ArrayList<ReadLikelihoods<Haplotype>>();
+        result.add(result_lowerbound);
+        result.add(result_upperbound);
+
+        return result;
+    }
+
+    public void hardware_process(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,
+                                 final LikelihoodMatrix<Haplotype> likelihoods_upperbound,
+                                 List<GATKRead> processedreads,
+                                 List<Haplotype> haplotypeList){
+
+    }
+
     /**
      * Creates a new GATKRead with the source read's header, read group and mate
      * information, but with the following fields set to user-supplied values:
@@ -334,6 +386,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
 
     //    writeDebugLikelihoods(likelihoods);
     //}
+
 
     //Prune Method
     // added by Chenhao:

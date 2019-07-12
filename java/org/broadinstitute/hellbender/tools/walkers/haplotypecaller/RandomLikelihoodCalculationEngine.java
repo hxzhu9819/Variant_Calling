@@ -16,7 +16,15 @@ public final class RandomLikelihoodCalculationEngine implements ReadLikelihoodCa
     @Override
     public List<ReadLikelihoods<Haplotype>> computeReadLikelihoods(AssemblyResultSet assemblyResultSet, SampleList samples,
                                                              Map<String, List<GATKRead>> perSampleReadList){
-            return null;
+        return null;
+    }
+
+    public List<ReadLikelihoods<Haplotype>> hardware_compute(final AssemblyResultSet assemblyResultSet,
+                                                             final SampleList samples,
+                                                             final Map<String, List<GATKRead>> perSampleReadList,
+                                                             final List<Integer> log2InitialValues,
+                                                             final List<Float> realInitialValues){
+        return null;
     }
 
     // added by Chenhao: just for pass compile

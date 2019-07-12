@@ -1657,6 +1657,8 @@ public class ReadLikelihoods<A extends Allele> implements SampleList, AlleleList
             // added by Chenhao: from the list of penalty, get the target matrix
             Map<GATKRead, byte[]> penalty = gapPenalties.get(s);
             List<GATKRead> processedReads = processedReadsList.get(s);
+            // first check whether pairhmm needs initialize
+            recompute_tool.tool_initialize(result_upperbound.sampleMatrix(s), processedReads);
 
             // added by Chenhao: new parameter -- penalty
             final List<Integer> removeIndices = new IndexRange(0, sampleReads.length)

@@ -846,11 +846,12 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
         }
     }
 
-    public void callRegionStepThree(final AssemblyResultSet assemblyResult, final Map<String,List<GATKRead>> reads){
+    public void callRegionStepThree(final AssemblyResultSet assemblyResult, final Map<String,List<GATKRead>> reads,
+                                    List<Integer> log2InitialValues, List<Float> realInitialValues){
         // 第三步
         // Calculate the likelihoods: CPU intensive part.
         final List<ReadLikelihoods<Haplotype>> readLikelihoods =
-                likelihoodCalculationEngine.computeReadLikelihoods(assemblyResult, samplesList, reads);
+                likelihoodCalculationEngine.hardware_compute(assemblyResult, samplesList, reads, log2InitialValues, realInitialValues);
 
         synchronized (keyForStepFour){
             assemblyStepFourInput.add(assemblyResult);
