@@ -447,7 +447,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         boolean passEmit_combined=false;
         boolean recompute = false;
         //biallelic case
-        if(vc.size()==3){
+        if(vc.size()==2){
             boolean mostLikelyStayed = outputAlternativeAlleles.get(0).outputAlleles(vc.get(0).getReference()).size()!=1;
             boolean mostLikelyFiltered = outputAlternativeAlleles.get(1).outputAlleles(vc.get(0).getReference()).size()==1;
             boolean gToPass = passEmit[0] ;
@@ -457,7 +457,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
             //System.err.printf("walkers/genotyper/GnotypingEngine.java biallelic case mostLikelyStayed=%b mostLikelyFiltered=%b passEmit_combined=%b\n",mostLikelyStayed,mostLikelyFiltered, passEmit_combined);
         }
         //multiple allele case with RA or AA:
-        else if(vc.size()==5){
+        else if(vc.size()==4){
             //Make sure the allele with max PL is stayed or filtered 
             boolean mostLikelyStayed = outputAlternativeAlleles.get(1).outputAlleles(vc.get(0).getReference()).indexOf(bestAlleleList.get(1))!=-1 
                                         && bestAlleleList.get(1)!=vc.get(1).getReference();

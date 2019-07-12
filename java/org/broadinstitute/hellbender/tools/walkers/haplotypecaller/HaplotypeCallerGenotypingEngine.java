@@ -791,7 +791,7 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
             }
         }
         if(!cross_bound){
-            for(int i=0; i<genotypelikelihoods_pass.size();i++){
+            for(int i=0; i < genotypelikelihoods_pass.size();i++){
                 //for(int g=0;g<genotypelikelihoods_pass.get(i).getAsVector().length;g++){
                 //System.err.printf("Xiao:tools/walkers/haplotypecaller/HaplotypeCallerGenotypingENgine.java/calculateGLsForThisEvent: likelihood set pass %d: likelihood[%d]=%f\n",i,g,genotypelikelihoods_pass.get(i).getAsVector()[g]);
                 //}
