@@ -333,10 +333,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
     //Prune Method
     // added by Chenhao:
     // The original function is modified: the gapPenalty and processed reads are moved to out loop
-    private void computeReadLikelihoods(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,
-                                        final LikelihoodMatrix<Haplotype> likelihoods_upperbound,
-                                        Map<GATKRead, byte[]> gapContinuationPenalties,
-                                        List<GATKRead> processedReads) {
+    private void computeReadLikelihoods(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,final LikelihoodMatrix<Haplotype> likelihoods_upperbound, Map<GATKRead, byte[]> gapContinuationPenalties, List<GATKRead> processedReads) {
         // Modify the read qualities by applying the PCR error model and capping the minimum base,insertion,deletion qualities
         // final List<GATKRead> processedReads = modifyReadQualities(likelihoods_lowerbound.reads());
 

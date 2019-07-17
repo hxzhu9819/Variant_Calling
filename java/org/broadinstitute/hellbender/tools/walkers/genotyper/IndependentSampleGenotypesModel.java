@@ -78,7 +78,7 @@ public final class IndependentSampleGenotypesModel {
 
         GenotypeLikelihoodCalculator likelihoodsCalculator_lo = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
         GenotypeLikelihoodCalculator likelihoodsCalculator_up = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
-        GenotypeLikelihoodCalculator likelihoodsCalculator_exact = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
+        // GenotypeLikelihoodCalculator likelihoodsCalculator_exact = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
         for (int i = 0; i < sampleCount; i++) {
             final int samplePloidy = ploidyModel.samplePloidy(i);
 
@@ -86,14 +86,14 @@ public final class IndependentSampleGenotypesModel {
             if (samplePloidy != likelihoodsCalculator_lo.ploidy()) {
                 likelihoodsCalculator_lo = getLikelihoodsCalculator(samplePloidy, alleleCount);
                 likelihoodsCalculator_up = getLikelihoodsCalculator(samplePloidy, alleleCount);
-                likelihoodsCalculator_exact = getLikelihoodsCalculator(samplePloidy, alleleCount);
+                // likelihoodsCalculator_exact = getLikelihoodsCalculator(samplePloidy, alleleCount);
             }
 
             final LikelihoodMatrix<A> sampleLikelihoods_lowerbound = alleleLikelihoodMatrixMapper.apply(data_lowerbound.readLikelihoods().sampleMatrix(i));
             final LikelihoodMatrix<A> sampleLikelihoods_upperbound = alleleLikelihoodMatrixMapper.apply(data_upperbound.readLikelihoods().sampleMatrix(i));
             // final LikelihoodMatrix<A> sampleLikelihoods_exact = alleleLikelihoodMatrixMapper.apply(data_exact.readLikelihoods().sampleMatrix(i));
-	        /*
-            //Sanity check:
+	        //Sanity check:
+            /*
 	        if(sampleLikelihoods_lowerbound.numberOfReads()!=sampleLikelihoods_upperbound.numberOfReads()||sampleLikelihoods_lowerbound.numberOfReads()!=sampleLikelihoods_exact.numberOfReads() ){
 	            System.err.printf("Xiao: walkers/genotyper/IndependentSampleGenotypesModel.java/calculateLikelihoods: Readcount inconsistent\n");
 	        }

@@ -215,6 +215,8 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     public VariantCallContext calculateGenotypes(final boolean exact_only,final List<VariantContext> vc, final GenotypeLikelihoodsCalculationModel model, final SAMFileHeader header,List<ReadLikelihoods<Allele>> readAlleleLikelihoods,boolean[] moreRecompute, final List<Allele> bestAlleleList) {
         Utils.nonNull(vc, "vc cannot be null");
         Utils.nonNull(model, "the model cannot be null");
+	// debug: 
+	System.out.println("exact only: " + exact_only);
         if(exact_only ){
             return calculateGenotypes(null,null,null,null,vc.get(0),model,false,null,header);
         }else{
@@ -454,6 +456,8 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
             boolean gToFail = !passEmit[1];
             recompute = (!gToPass && !gToFail) || (gToPass && !mostLikelyStayed);
             passEmit_combined = gToPass ? true : false;
+	    // debug
+	    System.out.println("vc: " + vc.size() + " recompute: " + recompute + " passemit_combined: " + passEmit_combined);
             //System.err.printf("walkers/genotyper/GnotypingEngine.java biallelic case mostLikelyStayed=%b mostLikelyFiltered=%b passEmit_combined=%b\n",mostLikelyStayed,mostLikelyFiltered, passEmit_combined);
         }
         //multiple allele case with RA or AA:
@@ -467,6 +471,8 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
             boolean gToFail = !passEmit[2];
             recompute = (!gToPass && !gToFail) || (gToPass && !mostLikelyStayed);
             passEmit_combined = gToPass ? true : false;
+	    // debug
+	    System.out.println("vc: " + vc.size() + " recompute: " + recompute + " passemit_combined: " + passEmit_combined);
             //System.err.printf("walkers/genotyper/GnotypingEngine.java multi alleles RA or AA case mostLikelyStayed=%b mostLikelyFiltered=%b passEmit_combined=%b\n",mostLikelyStayed,mostLikelyFiltered, passEmit_combined);
         }
         //multiple allele case with AB:
@@ -486,6 +492,8 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
             boolean gToFail = !passEmit[3];
             recompute = (!gToPass && !gToFail) || (gToPass && !(mostLikelyStayed[0] && mostLikelyStayed[1]));
             passEmit_combined = recompute ? false : gToPass;
+	    // debug
+	    System.out.println("vc: " + vc.size() + " recompute: " + recompute + " passemit_combined: " + passEmit_combined);
             //System.err.printf("walkers/genotyper/GnotypingEngine.java multi alleles AB case mostLikelyStayed[0]=%b [1]=%b mostLikelyFiltered[0]=%b [1]=%b passEmit_combined=%b\n",mostLikelyStayed[0],mostLikelyStayed[1],mostLikelyFiltered[0],mostLikelyFiltered[1], passEmit_combined);
         }
         //Handle recompute

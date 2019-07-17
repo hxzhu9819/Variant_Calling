@@ -289,6 +289,8 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
             int redolocus=0;
             do{
                 int [] redoSquares = new int[1];
+		// debug
+		System.out.println("moreRecompute: " + moreRecompute[0] + " " + moreRecompute[1]);
                 readAlleleLikelihoods = readLikelihoods.get(0).marginalize(haplotypes, readLikelihoods.get(1), alleleMapper, new SimpleInterval(mergedVC).expandWithinContig(ALLELE_EXTENSION, header.getSequenceDictionary()),moreRecompute[0]||moreRecompute[1],readPT,redoSquares);//[0] lowerbound [1] upperbound [2] exact
                 //System.err.printf("Xiao: /walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java/assignGenotypeLikelihoods after marginalization\n");
 
@@ -790,8 +792,11 @@ public class HaplotypeCallerGenotypingEngine extends AssemblyBasedCallerGenotypi
 
             }
         }
+	// debug
+	System.out.println("genotypelikelihoods_pass: " + genotypelikelihoods_pass.size());
+	System.out.println("calculateGLsForThisEvent exact_only: " + exact_only[0]);
         if(!cross_bound){
-            for(int i=0; i < genotypelikelihoods_pass.size();i++){
+            for(int i=0; i<genotypelikelihoods_pass.size();i++){
                 //for(int g=0;g<genotypelikelihoods_pass.get(i).getAsVector().length;g++){
                 //System.err.printf("Xiao:tools/walkers/haplotypecaller/HaplotypeCallerGenotypingENgine.java/calculateGLsForThisEvent: likelihood set pass %d: likelihood[%d]=%f\n",i,g,genotypelikelihoods_pass.get(i).getAsVector()[g]);
                 //}

@@ -325,13 +325,13 @@ public abstract class PairHMM implements Closeable{
         //System.err.printf("time to do appro=%d\n",elapsedTime);
 
         //start=System.nanoTime();
-        // final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
+        final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
         //elapsedTime = System.nanoTime()-start;
         //System.err.printf("time to do exact=%d\n",elapsedTime);
-
+        /*
         Utils.validate(result_approximate[0] <= 0.0, () -> "PairHMM Log Probability cannot be greater than 0: " + String.format("haplotype: %s, read: %s, result: %f, PairHMM: %s", new String(haplotypeBases), new String(readBases), result_approximate[0], this.getClass().getSimpleName()));
         Utils.validate(MathUtils.goodLog10Probability(result_approximate[0]), () -> "Invalid Log Probability: " + result_approximate[0]);
-
+        */
         // Warning: This assumes no downstream modification of the haplotype bases (saves us from copying the array). It is okay for the haplotype caller.
         previousHaplotypeBases = haplotypeBases;
 
@@ -341,7 +341,7 @@ public abstract class PairHMM implements Closeable{
         final double[] result = new double[2];
         result[0] = result_approximate[0];
         result[1] = result_approximate[1];
-        // result[2] = result_exact;
+        //result[2] = result_exact;
         return result;
     }
 

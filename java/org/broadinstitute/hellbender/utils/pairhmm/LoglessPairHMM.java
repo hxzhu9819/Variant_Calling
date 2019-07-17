@@ -204,7 +204,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
                         deletionMatrix[i - 1][j - 1] * transition[i][indelToMatch] );
                 insertionMatrix[i][j] = matchMatrix[i - 1][j] * transition[i][matchToInsertion] + insertionMatrix[i - 1][j] * transition[i][insertionToInsertion];
                 deletionMatrix[i][j] = matchMatrix[i][j - 1] * transition[i][matchToDeletion] + deletionMatrix[i][j - 1] * transition[i][deletionToDeletion];
-	    }
+	        }
         }
         // final log probability is the log10 sum of the last element in the Match and Insertion state arrays
         // this way we ignore all paths that ended in deletions! (huge)

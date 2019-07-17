@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1711a98e-9599-4198-b444-c4f085a3fec4" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java" afterDir="false" />
-    </list>
+    <list default="true" id="1711a98e-9599-4198-b444-c4f085a3fec4" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,13 +11,30 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java">
+        <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="451">
-              <caret line="604" column="10" selection-start-line="604" selection-start-column="10" selection-end-line="604" selection-end-column="10" />
+            <state relative-caret-position="32">
+              <caret line="1365" column="286" selection-start-line="1365" selection-start-column="286" selection-end-line="1365" selection-end-column="286" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#43139#43140#0" expanded="true" />
+                <element signature="e#4274#4275#0" expanded="true" />
+                <element signature="e#4301#4302#0" expanded="true" />
+                <element signature="e#14658#14659#0" expanded="true" />
+                <element signature="e#14710#14711#0" expanded="true" />
+                <element signature="e#14869#14870#0" expanded="true" />
+                <element signature="e#14917#14918#0" expanded="true" />
+                <element signature="e#15216#15217#0" expanded="true" />
+                <element signature="e#15269#15270#0" expanded="true" />
+                <element signature="e#15627#15628#0" expanded="true" />
+                <element signature="e#15679#15680#0" expanded="true" />
+                <element signature="e#15826#15827#0" expanded="true" />
+                <element signature="e#15874#15875#0" expanded="true" />
+                <element signature="e#16170#16171#0" expanded="true" />
+                <element signature="e#16223#16224#0" expanded="true" />
+                <element signature="e#17037#17038#0" expanded="true" />
+                <element signature="e#17070#17071#0" expanded="true" />
+                <element signature="e#34640#34660#0" expanded="true" />
+                <element signature="e#42690#42710#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -51,6 +66,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
@@ -83,7 +99,7 @@
               <item name="org" type="462c0819:PsiDirectoryNode" />
               <item name="broadinstitute" type="462c0819:PsiDirectoryNode" />
               <item name="hellbender" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
+              <item name="utils" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="java" type="b2602c69:ProjectViewProjectNode" />
@@ -91,24 +107,13 @@
               <item name="org" type="462c0819:PsiDirectoryNode" />
               <item name="broadinstitute" type="462c0819:PsiDirectoryNode" />
               <item name="hellbender" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="walkers" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="java" type="b2602c69:ProjectViewProjectNode" />
-              <item name="java" type="462c0819:PsiDirectoryNode" />
-              <item name="org" type="462c0819:PsiDirectoryNode" />
-              <item name="broadinstitute" type="462c0819:PsiDirectoryNode" />
-              <item name="hellbender" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="walkers" type="462c0819:PsiDirectoryNode" />
-              <item name="haplotypecaller" type="462c0819:PsiDirectoryNode" />
+              <item name="utils" type="462c0819:PsiDirectoryNode" />
+              <item name="genotyper" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -153,13 +158,13 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="3999000" />
+    <option name="totallyTimeSpent" value="4017000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.1602289" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16237482" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -231,8 +236,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="71">
-          <caret line="1457" selection-start-line="1457" selection-end-line="1457" />
+        <state relative-caret-position="32">
+          <caret line="1365" column="286" selection-start-line="1365" selection-start-column="286" selection-end-line="1365" selection-end-column="286" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#4274#4275#0" expanded="true" />
@@ -251,7 +256,8 @@
             <element signature="e#16223#16224#0" expanded="true" />
             <element signature="e#17037#17038#0" expanded="true" />
             <element signature="e#17070#17071#0" expanded="true" />
-            <element signature="e#46670#66390#0" />
+            <element signature="e#34640#34660#0" expanded="true" />
+            <element signature="e#42690#42710#0" expanded="true" />
           </folding>
         </state>
       </provider>
