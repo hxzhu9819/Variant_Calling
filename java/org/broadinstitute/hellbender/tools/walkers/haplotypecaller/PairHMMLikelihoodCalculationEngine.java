@@ -314,13 +314,187 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         return result;
     }
 
+
+
+    /**
+     * @input: num: value to be converted to binary string.
+     * @input: digits: the number of digits
+     * @return: binary string
+     */
+    public static String toBinary(int num, int digits) {
+        char[] chars = new char[digits];
+        Arrays.fill(chars, '0');
+        String cover = new String(chars);
+        String s = Integer.toBinaryString(num);
+        return s.length() < digits ? cover.substring(s.length()) + s : s;
+    }
+
+
+    /**
+     * @modified: likelihoods_lowerbound: Matrix containing lowerbound values
+     * @modified: likelihoods_upperbound: Matrix containing upperbound values
+     * @input: processedreads: a list of reads
+     * @input: haplotypeList: a list of haplotypes
+     * @input: log2InitialValues: a list of log2 initial values
+     * @input: realInitialValues: a list of Initial Values
+     */
     public void hardware_process(final LikelihoodMatrix<Haplotype> likelihoods_lowerbound,
                                  final LikelihoodMatrix<Haplotype> likelihoods_upperbound,
                                  List<GATKRead> processedreads,
                                  List<Haplotype> haplotypeList,
                                  final List<Integer> log2InitialValues,
                                  final List<Float> realInitialValues){
-        
+
+        //processedreads.get(/*index*/).getBasesString();
+
+        List<String> readsbin = new ArrayList<String>();
+        List<String> hapsbin = new ArrayList<String>();
+        List<Integer> numliner= new ArrayList<Integer>();
+        List<Integer> numlineh= new ArrayList<Integer>();
+        StringBuilder bin2c = new StringBuilder();
+
+        //Data process for reads
+        for(GATKRead read : processedreads){
+            int l = read.getLength();
+
+            String isN = "";
+
+            StringBuilder bin = new StringBuilder("01");
+            bin.append(toBinary(l,14));
+
+            // bp+Q
+            for(int i = 0; i < l; i++){
+
+                String base;
+                if(read.getBasesString().charAt(i) == 'A'){
+                    base = "00";
+                    isN = isN.concat("0");
+                }
+                else if(read.getBasesString().charAt(i) == 'T'){
+                    base = "01";
+                    isN = isN.concat("0");
+                }
+                else if(read.getBasesString().charAt(i) == 'G'){
+                    base = "10";
+                    isN = isN.concat("0");
+                }
+                else if(read.getBasesString().charAt(i) == 'C'){
+                    base = "11";
+                    isN = isN.concat("0");
+                }
+                else{
+                    base ="00";
+                    isN = isN.concat("1");
+                }
+                base = base + toBinary(read.getBaseQuality(i) > 64 ? 64 : read.getBaseQuality(i), 6);
+                //add to bin
+                bin.append(base);
+                //System.out.print(base + '\n');
+            }//for
+            bin.append(isN.trim());
+
+            //parse
+            int k = 0;
+            int numLine = 0;
+            while(k < bin.length()){
+                readsbin.add( bin.substring(k,k+288 > bin.length() ? bin.length() : k+288) );
+                k += 288;
+                numLine++;
+            }
+            numliner.add(numLine);
+        }
+
+        //Data Process for haps
+        int index = 0;
+        for(Haplotype hap : haplotypeList){
+          int l = hap.toString().length();
+
+          StringBuilder bin = new StringBuilder("10");
+          bin.append(toBinary(l,14));
+          bin.append(toBinary(log2InitialValues.get(index),32));
+          bin.append(toBinary(realInitialValues.get(index).intValue(),32));
+
+          index = index + 1;
+          for(int i = 0; i < l; i++){
+            // bp+Q
+            String base;
+            if(hap.toString().charAt(i) == 'A'){
+              base = "00";
+            }
+            else if(hap.toString().charAt(i) == 'T'){
+              base = "01";
+            }
+            else if(hap.toString().charAt(i) == 'G'){
+              base = "10";
+            }
+            else if(hap.toString().charAt(i) == 'C'){
+              base = "11";
+            }
+            else{
+              base ="00";
+            }
+            //add to bin
+            bin.append(base);
+          }//for
+
+          //parse
+          int k = 0;
+          int numLine = 0;
+          while(k < bin.length()){
+            hapsbin.add( bin.substring(k,k+288 > bin.length() ? bin.length() : k+288) );
+            k += 288;
+            numLine++;
+          }
+          numlineh.add(numLine);
+
+        }
+
+      //check size TODO
+      int batchSize = 20;
+      int sramSize = 1000;
+      int numRead = processedreads.size();
+      int numHaplotype = haplotypeList.size();
+      int outputSize = numRead * numHaplotype;
+      int totNumLine = numliner.stream().mapToInt(Integer::intValue).sum() + numlineh.stream().mapToInt(Integer::intValue).sum();
+
+      if(totNumLine< sramSize - outputSize){
+        System.out.println("Sufficient Space!");
+        System.out.println(numliner.stream().mapToInt(Integer::intValue).sum()  + " totNumLiner <-|-> totNumLineh " + numlineh.stream().mapToInt(Integer::intValue).sum()); //Test
+
+        //Generate Header
+        String headerbin = "0000000000000000" + toBinary(numRead,16) + toBinary(numHaplotype,16) + toBinary(numliner.stream().mapToInt(Integer::intValue).sum(),16) + toBinary(numliner.stream().mapToInt(Integer::intValue).sum(),288 - 16 * 4) ;
+
+        //System.out.println("-----header-----\n" + bin + "\n");
+        bin2c.append(headerbin);
+        bin2c.append("\n");
+        for(String s : readsbin){
+          bin2c.append(s);
+          bin2c.append("\n");
+        }
+        for(String s : hapsbin){
+          bin2c.append(s);
+          bin2c.append("\n");
+        }
+
+        //TODO: Send the data to C buffer
+        System.out.println(bin2c.toString());
+      }
+      else{
+        //TODO
+        System.out.println("Insufficient Size");
+      }
+
+      /*
+      Questions:
+      1. Why do not we put haplotypes in front of reads?
+      2. Wait for FPGA to return? Waste of time?
+      3. Edge case
+      4. Efficiency problems
+      5. How to fill in the buffer? Currently it is string + "\n". How buffer identify lines?
+       */
+
+
+
     }
 
     /**
