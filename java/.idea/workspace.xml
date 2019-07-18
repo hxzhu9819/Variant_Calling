@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1711a98e-9599-4198-b444-c4f085a3fec4" name="Default Changelist" comment="" />
+    <list default="true" id="1711a98e-9599-4198-b444-c4f085a3fec4" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/LoglessPairHMM.java" beforeDir="false" afterPath="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/LoglessPairHMM.java" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -10,11 +12,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="32">
-              <caret line="1365" column="286" selection-start-line="1365" selection-start-column="286" selection-end-line="1365" selection-end-column="286" />
+              <caret line="1365" column="56" selection-start-line="1365" selection-start-column="56" selection-end-line="1365" selection-end-column="56" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#4274#4275#0" expanded="true" />
@@ -33,9 +35,16 @@
                 <element signature="e#16223#16224#0" expanded="true" />
                 <element signature="e#17037#17038#0" expanded="true" />
                 <element signature="e#17070#17071#0" expanded="true" />
-                <element signature="e#34640#34660#0" expanded="true" />
-                <element signature="e#42690#42710#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/LoglessPairHMM.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="387">
+              <caret line="111" column="45" selection-start-line="111" selection-start-column="45" selection-end-line="111" selection-end-column="45" />
             </state>
           </provider>
         </entry>
@@ -53,6 +62,7 @@
         <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java" />
         <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java" />
         <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java" />
+        <option value="$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/LoglessPairHMM.java" />
       </list>
     </option>
   </component>
@@ -66,7 +76,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
@@ -108,12 +117,13 @@
               <item name="broadinstitute" type="462c0819:PsiDirectoryNode" />
               <item name="hellbender" type="462c0819:PsiDirectoryNode" />
               <item name="utils" type="462c0819:PsiDirectoryNode" />
-              <item name="genotyper" type="462c0819:PsiDirectoryNode" />
+              <item name="pairhmm" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -154,17 +164,18 @@
       <workItem from="1561392185192" duration="137000" />
       <workItem from="1561415623179" duration="94000" />
       <workItem from="1562715258219" duration="58000" />
+      <workItem from="1563464490181" duration="31000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="4017000" />
+    <option name="totallyTimeSpent" value="4048000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16237482" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16452074" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -234,10 +245,21 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="451">
+          <caret line="604" column="10" selection-start-line="604" selection-start-column="10" selection-end-line="604" selection-end-column="10" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#43139#43140#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="32">
-          <caret line="1365" column="286" selection-start-line="1365" selection-start-column="286" selection-end-line="1365" selection-end-column="286" />
+          <caret line="1365" column="56" selection-start-line="1365" selection-start-column="56" selection-end-line="1365" selection-end-column="56" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#4274#4275#0" expanded="true" />
@@ -256,20 +278,14 @@
             <element signature="e#16223#16224#0" expanded="true" />
             <element signature="e#17037#17038#0" expanded="true" />
             <element signature="e#17070#17071#0" expanded="true" />
-            <element signature="e#34640#34660#0" expanded="true" />
-            <element signature="e#42690#42710#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java">
+    <entry file="file://$PROJECT_DIR$/org/broadinstitute/hellbender/utils/pairhmm/LoglessPairHMM.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="451">
-          <caret line="604" column="10" selection-start-line="604" selection-start-column="10" selection-end-line="604" selection-end-column="10" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#43139#43140#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="387">
+          <caret line="111" column="45" selection-start-line="111" selection-start-column="45" selection-end-line="111" selection-end-column="45" />
         </state>
       </provider>
     </entry>

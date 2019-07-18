@@ -100,7 +100,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
     }
     
     private static int[] createInitialValueTable(){
-        int[] initialTable = new int[700];
+        int[] initialTable = new int[1000];
         initialTable[0]=0;//meaningless
         for(int i=1;i<initialTable.length;i++){
             initialTable[i] = Upper_LOG2_accurate(INITIAL_CONDITION_UP / i);
@@ -109,7 +109,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
         return initialTable;
     }
     private static float[] createOffsetTable(){
-        float [] offsetTable = new float[700];
+        float [] offsetTable = new float[1000];
         offsetTable[0]=0;//meaningless
         for(int i=1; i<offsetTable.length;i++){
             offsetTable[i] = (float)Math.log10(Math.pow(2,Fix2Float(INITIALVALUE_TABLE[i]))* i);
