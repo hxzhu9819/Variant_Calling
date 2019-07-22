@@ -42,9 +42,6 @@ while line != '':
     region_prune_time += 1
     line = file2.readline()
     line = line.split()
-    filter_prune_time += int(line[-1])
-    line = file2.readline()
-    line = line.split()
     genotype_prune_time += int(line[-1])
     line = file2.readline()
     line = line.split()
@@ -59,7 +56,7 @@ while line != '':
 
 file2.close()
 print("#prune region:", region_prune_time)
-print("filter prune time(ms):", filter_prune_time)
+# print("filter prune time(ms):", filter_prune_time)
 print("genotype prune time(ms):", genotype_prune_time)
 print("prune time after pairHMM(ms):", genotype_prune_time + filter_prune_time)
 
