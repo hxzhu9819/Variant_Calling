@@ -22,7 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
-
+import JNIinterface;
 /*
  * Classic likelihood computation: full pair-hmm all haplotypes vs all reads.
  */
@@ -269,7 +269,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         return result;
     }
 
-    // added by Chenhao: hardware version compute
+
     public List<ReadLikelihoods<Haplotype>> hardware_compute(final AssemblyResultSet assemblyResultSet,
                                                              final SampleList samples,
                                                              final Map<String, List<GATKRead>> perSampleReadList,
@@ -317,6 +317,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
 
 
     /**
+     * Helper function for hardware_process
      * @input: num: value to be converted to binary string.
      * @input: digits: the number of digits
      * @return: binary string
@@ -457,7 +458,7 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
       int outputSize = numRead * numHaplotype;
       int totNumLine = numliner.stream().mapToInt(Integer::intValue).sum() + numlineh.stream().mapToInt(Integer::intValue).sum();
 
-      if(totNumLine< sramSize - outputSize){
+      if(totNumLine < sramSize - outputSize){
         System.out.println("Sufficient Space!");
         System.out.println(numliner.stream().mapToInt(Integer::intValue).sum()  + " totNumLiner <-|-> totNumLineh " + numlineh.stream().mapToInt(Integer::intValue).sum()); //Test
 
@@ -467,20 +468,25 @@ public final class PairHMMLikelihoodCalculationEngine implements ReadLikelihoodC
         //System.out.println("-----header-----\n" + bin + "\n");
         bin2c.append(headerbin);
         bin2c.append("\n");
-        for(String s : readsbin){
-          bin2c.append(s);
-          bin2c.append("\n");
-        }
+
         for(String s : hapsbin){
           bin2c.append(s);
           bin2c.append("\n");
         }
+        for(String s : readsbin){
+          bin2c.append(s);
+          bin2c.append("\n");
+        }
+        
+        //System.out.println(bin2c.toString());
 
-        //TODO: Send the data to C buffer
-        System.out.println(bin2c.toString());
+        //Send the data to C buffer
+        JNIinterface jni = new JNIinterface();
+    		jni.JNI_send_string_to_c(bin2c.toString());
+
       }
       else{
-        //TODO
+        //TODO: We should check that once we know the actual ram size.
         System.out.println("Insufficient Size");
       }
 
