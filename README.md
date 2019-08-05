@@ -12,7 +12,7 @@ When bound check fails use `recomputeOneRead` function to calculate the exact li
 ### Assign genotype likelihoods
 The recompute happens in the functions `marginalLikelihoods` in the file `/java/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java`.
 
-For current version, there are two versions that decide which reads to recompute.
+For current version, there are two methods that decide which reads to recompute.
 * recompute the reads with worst bound gap
 * recompute the reads in the region one by one
 
@@ -30,13 +30,13 @@ When recompute, the algorithm mainly do the following steps:
 * normalize (cap the likelihoods) after all index keep the same.
 
 ## Important functions added/modified
-* ** `/java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java`**
+* **`/java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java`**
 
   * `computeReadLikelihoods`: divided into three sub functions. The first two generate the gap penalties and processed read lists, and the third one do the compute likelihoods.
 
   * `getPenaltyMap`:  generate the gap penalties. It will be kept in the `ReadLikelihoods` class for recomputation.
 
-* ** `/java/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java`**
+* **`/java/org/broadinstitute/hellbender/utils/genotyper/ReadLikelihoods.java`**
 
   The following variables are added:
   * `double cap_difference`: used for normalize likelihoods
@@ -71,10 +71,15 @@ When recompute, the algorithm mainly do the following steps:
 
   * `computeOneReadLikelihoodGivenHaplotypeLog10`: only calculate the likelihood for one Read against one Haplotype
 
-##TODO
+## TODO
 
 ### For profile
 In the genotypeEngine, `calculateGL`, the exact part is not removed yet for debug purpose. The current time spent is about 2.6x, which is expected to be 1.8x.
 
+### Removing exact values
+For the current version, the recompute part should not have problems. Now the exact values (only for debug) are removed after pairhmm. The time spent is still about 2.5x, higher than expected.
+
 ### For steps before output
-exact matrix is still calculated in PairHMM. Remvoe after bound check method is bug-free.
+In previous version, exact matrix is still calculated in PairHMM. When trying to remove the corresponding line in `PairHMM.java`, in function `computeReadLikelihoodGivenHaplotypeLog10`, there's problems. The result of approximate becomes different, which causes a dead loop in the following steps. To debug, plz use the following command on `mbit` server, which marked the region that leads to the problem.
+
+`./gatk HaplotypeCaller -R /z/scratch7/index/hg38.fa -I /z/scratch7/bam/variant_test_dupRem.bam -O /z/scratch7/leevius/output/run_result.vcf --native-pair-hmm-threads 56 -max-assembly-region-size 300 --smith-waterman FASTEST_AVAILABLE --pcr-indel-model NONE -L chr1:17906100-17906300`
