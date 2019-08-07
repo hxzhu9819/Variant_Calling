@@ -83,3 +83,14 @@ For the current version, the recompute part should not have problems. Now the ex
 In previous version, exact matrix is still calculated in PairHMM. When trying to remove the corresponding line in `PairHMM.java`, in function `computeReadLikelihoodGivenHaplotypeLog10`, there's problems. The result of approximate becomes different, which causes a dead loop in the following steps. To debug, plz use the following command on `mbit` server, which marked the region that leads to the problem.
 
 `./gatk HaplotypeCaller -R /z/scratch7/index/hg38.fa -I /z/scratch7/bam/variant_test_dupRem.bam -O /z/scratch7/leevius/output/run_result.vcf --native-pair-hmm-threads 56 -max-assembly-region-size 300 --smith-waterman FASTEST_AVAILABLE --pcr-indel-model NONE -L chr1:17906100-17906300`
+
+The possiblities that leads to this bug may be as following
+* `/java/org/broadinstitute/hellbender/utils/pairhmm/PairHMM.java`: line 323 and 328, the two computation functions both use the same global matrix (refer to `LoglessPairHMM.java`). When exact value is calculated, the matrix is not cleared to zeros but continue to be used in approximate values calculation.
+
+* `/java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerGenotypingEngine.java`: line 786 to 794, the variable `exact_only` is should become true after some loops. But in the region givn above, it is always false that leads to dead loop. The possible problem maybe happen in the comparison (line 789).
+
+## Version description
+
+* The current (newest) commit has not solved the problem metioned in TODO. So the exact values are kept in PairHMM step to ensure there won't be dead loops. All the exact values used after PairHMM are removed.
+
+* Tag v1.0 or commit `4e085f3`: The version keeps the exact values calculation. The recompute is completed and should be bug-free.
