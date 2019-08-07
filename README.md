@@ -80,15 +80,23 @@ To combine with hardware, multi-threads is used. For now the main progress is di
 
   * `computeOneReadLikelihoodGivenHaplotypeLog10`: only calculate the likelihood for one Read against one Haplotype
 
+* **`/java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCaller.java`**
+  * `applyAllRegion`: the function that handle three threads that complete a progress for an active region
+
+  * `ThreadOne` to `ThreadFour`: different threads that handle different steps of GATK algorithm
+
+* **`/java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/HaplotypeCallerEngine.java`**
+  * Line 148 to line 169: lists are containers for outputs of different threads, and key objects are for locking threads when there are conflicts.
+
+  * `callRegionStepOne` to `callRegionStepFour`: divide the `callRegion` function into four minor functions, and each one is called by different threads.
+
 ## TODO
 
-### For profile
-In the genotypeEngine, `calculateGL`, the exact part is not removed yet for debug purpose. The current time spent is about 2.6x, which is expected to be 1.8x.
+When the hardware interface is ready, test the code. There may still exist bugs or conflicts when applying the multi-threads version.
 
-### Removing exact values
-For the current version, the recompute part should not have problems. Now the exact values (only for debug) are removed after pairhmm. The time spent is still about 2.5x, higher than expected.
+## Version Description
+The hardware branch originates from tag v1.0 (commit `4e085f3`)
 
-### For steps before output
-In previous version, exact matrix is still calculated in PairHMM. When trying to remove the corresponding line in `PairHMM.java`, in function `computeReadLikelihoodGivenHaplotypeLog10`, there's problems. The result of approximate becomes different, which causes a dead loop in the following steps. To debug, plz use the following command on `mbit` server, which marked the region that leads to the problem.
+* commit `a420463`: generate three threads for callRegion. hardware interface is not injected yet. exact values are still kept but not used.
 
-`./gatk HaplotypeCaller -R /z/scratch7/index/hg38.fa -I /z/scratch7/bam/variant_test_dupRem.bam -O /z/scratch7/leevius/output/run_result.vcf --native-pair-hmm-threads 56 -max-assembly-region-size 300 --smith-waterman FASTEST_AVAILABLE --pcr-indel-model NONE -L chr1:17906100-17906300`
+* commit `70fc18c`: hardware interface is injected. The exact value calculations are removed, except in PairHMM step. Since PairHMM is due to hardware, it should not be used anyway.
