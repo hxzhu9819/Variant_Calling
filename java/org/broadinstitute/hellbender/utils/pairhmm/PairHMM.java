@@ -338,7 +338,7 @@ public abstract class PairHMM implements Closeable{
         //System.err.printf("time to do appro=%d\n",elapsedTime);
 
         //start=System.nanoTime();
-        // final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
+        final double result_exact = subComputeReadLikelihoodGivenHaplotypeLog10_exact(haplotypeBases, readBases, readQuals, insertionGOP, deletionGOP, overallGCP, hapStartIndex, recacheReadValues, nextHapStartIndex);
         //elapsedTime = System.nanoTime()-start;
         //System.err.printf("time to do exact=%d\n",elapsedTime);
 
