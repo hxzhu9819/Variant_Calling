@@ -6,14 +6,14 @@ This is the hardware version of variant_calling. It applies multi-thread and hav
 
 ## Added files
 
-* `JNIinterface.java`:
+* `java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/JNIinterface.java`:
 
   Provides the JNI interface class. Notice that all the member functions are native.
 
   * `JNI_send_string_to_c`: take a Java String as an argument and send it to a C function
   * `JNI_request_from_c`: Ask the corresponding C function for a String
 
-* `slave.c`:
+* `java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/slave.c`:
 
   C implementations of the native functions decleared in `JNIinterface.java`
 
@@ -22,17 +22,17 @@ This is the hardware version of variant_calling. It applies multi-thread and hav
   * `Java_JNIinterface_JNI_1request_1from_1c`: C implementation for `JNI_request_from_c` in `JNIinterface.java`. It calls `dma_read` to get `char*` and send it back to Java.
   * `dma_read`: This function fetch data from DDR to buffer, and store it to a global variable.
 
-* `jni.h`
+* `java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/jni.h`
 
   JNI requires this file to be moved to the working directory. 
 
-* `jni_md.h`
+* `java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/jni_md.h`
 
   JNI requires this file to be moved to the working directory. 
 
 ## Modified files
 
-* `PairHMMLikelihoodCalculationEngine.java`:
+* `java/org/broadinstitute/hellbender/tools/walkers/haplotypecaller/PairHMMLikelihoodCalculationEngine.java`:
   * `toBinary`: helper function for `hardware_process`. It takes values and desired number of digits as input, and output the value in binary in string  with required length.
   * `hardware_process`: See JavaDoc for detail. This function takes all the required data for PairHMM as input, convert them into binary according to the assigned bitmap, and call `JNI_send_string_to_c` to send the binary to FPGA.
 
