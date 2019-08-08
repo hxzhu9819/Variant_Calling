@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Variant_Calling Hardware Version
 
 This is the hardware version of variant_calling. It applies multi-thread and have intergrated data-tranfer interface and binary converter.
